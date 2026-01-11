@@ -25,62 +25,48 @@
 <h2>Flights</h2>
 <button onclick="loadData()">Оновити</button>
 <table id="table"></table>
+
 <script>
-const supabaseClient = supabase.createClient(
-  "https://opuosltpihrhnpyxcxnm.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
+const supabase = supabase.createClient(
+  "PASTE_PROJECT_URL",
+  "PASTE_ANON_KEY"
 );
 
-window.login = async function () {
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: document.getElementById("email").value,
-    password: document.getElementById("password").value
+async function login() {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
   });
+  if (error) alert(error.message);
+  else loadData();
+}
 
-  if (error) {
-    alert("Помилка входу: " + error.message);
-    return;
-  }
-
-  loadData();
-};
-
-window.loadData = async function () {
-  const { data, error } = await supabaseClient
+async function loadData() {
+  const { data, error } = await supabase
     .from("flights")
     .select("*")
     .order("id");
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
+  if (error) return alert(error.message);
 
   const table = document.getElementById("table");
   table.innerHTML = "";
 
-  if (!data || data.length === 0) return;
+  if (data.length === 0) return;
 
   const headers = Object.keys(data[0]);
-  table.innerHTML += "<tr>" +
-    headers.map(h => `<th>${h}</th>`).join("") +
-    "</tr>";
+  table.innerHTML += "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
 
   data.forEach(row => {
-    table.innerHTML += "<tr>" +
-      headers.map(h =>
-        `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">
-          ${row[h] ?? ""}
-        </td>`
-      ).join("") +
-      "</tr>";
+    table.innerHTML += "<tr>" + headers.map(h =>
+      `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">${row[h] ?? ""}</td>`
+    ).join("") + "</tr>";
   });
-};
+}
 
-window.save = async function (id, field, value) {
-  await supabaseClient
-    .from("flights")
-    .update({ [field]: value })
-    .eq("id", id);
-};
+async function save(id, field, value) {
+  await supabase.from("flights").update({ [field]: value }).eq("id", id);
+}
 </script>
+
+</body>
+</html>
