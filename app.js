@@ -136,43 +136,6 @@ window.addFlight = async function () {
 };
 
 /* ==============================
-   FULL TABLE (EDITABLE)
-================================ */
-window.loadData = async function () {
-  const { data, error } = await supabaseClient
-    .from("flights")
-    .select("*")
-    .order("id");
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  const table = document.getElementById("table");
-  table.innerHTML = "";
-  if (!data || data.length === 0) return;
-
-  const headers = Object.keys(data[0]);
-  table.innerHTML =
-    "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
-  data.forEach(row => {
-    table.innerHTML +=
-      "<tr>" +
-      headers.map(h =>
-        h === "id"
-          ? `<td>${row[h]}</td>`
-          : `<td contenteditable
-                 onblur="save(${row.id}, '${h}', this.innerText)">
-                 ${row[h] ?? ""}
-             </td>`
-      ).join("") +
-      "</tr>";
-  });
-};
-
-/* ==============================
    SAVE CELL
 ================================ */
 window.save = async function (id, field, value) {
