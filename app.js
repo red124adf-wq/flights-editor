@@ -77,33 +77,39 @@ window.loadLast10 = async function () {
 };
 
 /* ================= DIALOG ================= */
+
 let currentTable = null;
-let currentSelect = null;
+let currentSelectId = null;
 
 window.openDialog = function (table, selectId) {
   currentTable = table;
-  currentSelect = selectId;
-  dialogInput.value = "";
-  dictDialog.classList.remove("hidden");
+  currentSelectId = selectId;
+
+  document.getElementById("dialogInput").value = "";
+  document.getElementById("dialogTitle").innerText = "Додати";
+
+  document.getElementById("dictDialog").classList.remove("hidden");
 };
 
 window.closeDialog = function () {
-  dictDialog.classList.add("hidden");
+  document.getElementById("dictDialog").classList.add("hidden");
 };
 
 window.confirmDialog = async function () {
-  const value = dialogInput.value.trim();
+  const value = document.getElementById("dialogInput").value.trim();
   if (!value) return;
 
   const { error } = await supabaseClient
     .from(currentTable)
     .insert({ name: value });
 
-  if (!error) {
-    await loadSelect(currentTable, currentSelect);
-    document.getElementById(currentSelect).value = value;
-    closeDialog();
-  } else {
+  if (error) {
     alert(error.message);
+    return;
   }
+
+  await loadSelect(currentTable, currentSelectId);
+  document.getElementById(currentSelectId).value = value;
+
+  window.closeDialog();
 };
