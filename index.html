@@ -50,10 +50,6 @@
 
 <hr>
 
-<h2>Flights (вся таблиця)</h2>
-<button onclick="loadData()">Оновити</button>
-<table id="table"></table>
-
 <script>
 /* SUPABASE CLIENT */
 const supabaseClient = window.supabase.createClient(
@@ -82,6 +78,17 @@ window.login = async function () {
   loadLast10();
   loadData();
 };
+  
+function formatDateUA(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function formatTimeNoSeconds(timeStr) {
+  if (!timeStr) return "";
+  return timeStr.slice(0, 5); // HH:MM
+}
 
 /* LAST 10 RECORDS */
 window.loadLast10 = async function () {
@@ -99,12 +106,14 @@ window.loadLast10 = async function () {
 
   const table = document.getElementById("last10");
   table.innerHTML = "";
-
   if (!data || data.length === 0) return;
 
+  /* ⬇️ ПЕРЕВЕРТАЄМО ХРОНОЛОГІЮ */
+  const rows = data.reverse();
+
   const columns = [
-    { key: "date", label: "Дата" },
-    { key: "time", label: "Час" },
+    { key: "date", label: "Дата", format: formatDateUA },
+    { key: "time", label: "Час", format: formatTimeNoSeconds },
     { key: "from_m", label: "Звідки" },
     { key: "to_t", label: "Куди" },
     { key: "crew", label: "Екіпаж" },
@@ -119,14 +128,16 @@ window.loadLast10 = async function () {
     "</tr>";
 
   /* Рядки */
-  data.forEach(row => {
+  rows.forEach(row => {
     table.innerHTML +=
       "<tr class='readonly'>" +
-      columns.map(c => `<td>${row[c.key] ?? ""}</td>`).join("") +
+      columns.map(c => {
+        const value = row[c.key];
+        return `<td>${c.format ? c.format(value) : (value ?? "")}</td>`;
+      }).join("") +
       "</tr>";
   });
 };
-
 
 /* ADD NEW FLIGHT */
 window.addFlight = async function () {
