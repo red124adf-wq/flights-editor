@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Flights Editor</title>
-
-  <!-- ПРАВИЛЬНЕ ПІДКЛЮЧЕННЯ SUPABASE -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Arial; margin: 20px; }
     table { border-collapse: collapse; width: 100%; }
@@ -30,28 +27,45 @@
 <table id="table"></table>
 
 <script>
-window.login = async function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const status = document.getElementById("status");
+const supabase = supabase.createClient(
+  "PASTE_PROJECT_URL",
+  "PASTE_ANON_KEY"
+);
 
-  status.innerText = "⏳ Вхід…";
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
+async function login() {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
   });
+  if (error) alert(error.message);
+  else loadData();
+}
 
-  if (error) {
-    status.innerText = "❌ Помилка: " + error.message;
-    return;
-  }
+async function loadData() {
+  const { data, error } = await supabase
+    .from("flights")
+    .select("*")
+    .order("id");
+  if (error) return alert(error.message);
 
-  status.innerText = "✅ Вхід успішний";
-  console.log("AUTH DATA:", data);
+  const table = document.getElementById("table");
+  table.innerHTML = "";
 
-  await loadData();
-};
+  if (data.length === 0) return;
+
+  const headers = Object.keys(data[0]);
+  table.innerHTML += "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+  data.forEach(row => {
+    table.innerHTML += "<tr>" + headers.map(h =>
+      `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">${row[h] ?? ""}</td>`
+    ).join("") + "</tr>";
+  });
+}
+
+async function save(id, field, value) {
+  await supabase.from("flights").update({ [field]: value }).eq("id", id);
+}
 </script>
 
 </body>
