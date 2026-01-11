@@ -101,14 +101,3 @@ td[contenteditable]:focus {
   outline: 2px solid #4a90e2;
   background: #eef5ff;
 }
-
-.dict-add {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.dict-add input {
-  flex: 1;
-}
-
