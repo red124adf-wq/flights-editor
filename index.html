@@ -7,19 +7,11 @@
   <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; }
-    th { background: #eee; }
-    input { display:block; margin-bottom:6px; width:300px; }
-    button { padding: 6px 12px; }
-    .readonly td { background:#fafafa; }
-  </style>
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<!-- PAGES SYNC TEST -->
 
 <h2>Вхід</h2>
 
@@ -27,7 +19,7 @@
 <input id="passwordInput" type="password" placeholder="Пароль">
 <button onclick="login()">Увійти</button>
 
-<div id="status" style="margin-top:10px;font-weight:bold;"></div>
+<div id="status"></div>
 
 <hr>
 
@@ -54,6 +46,9 @@
 </div>
 
 <hr>
+
+<h3>Повна таблиця</h3>
+<table id="table"></table>
 
 <script src="app.js"></script>
 
