@@ -1,10 +1,103 @@
+/* =====================================
+   GLOBAL
+===================================== */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  padding: 20px;
+  min-height: 100vh;
   font-family: Arial, sans-serif;
+  color: #222;
 
+  /* BACKGROUND IMAGE */
   background:
-    linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-    url("bg.jpg") no-repeat center center fixed;
+    linear-gradient(
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.88)
+    ),
+    url("./bg.jpg") no-repeat center center fixed;
 
   background-size: cover;
+}
+
+/* =====================================
+   HEADERS
+===================================== */
+h2, h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* =====================================
+   TABLES
+===================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #cfcfcf;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #e9edf3;
+  font-weight: bold;
+}
+
+.readonly td {
+  background: #f7f7f7;
+}
+
+/* =====================================
+   FORMS
+===================================== */
+#addForm {
+  background: #ffffff;
+  border: 1px solid #cfcfcf;
+  padding: 15px;
+  max-width: 400px;
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+button {
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* =====================================
+   STATUS
+===================================== */
+#status {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* =====================================
+   EDITABLE CELLS
+===================================== */
+td[contenteditable] {
+  background: #ffffff;
+}
+
+td[contenteditable]:focus {
+  outline: 2px solid #4a90e2;
+  background: #eef5ff;
 }
