@@ -41,17 +41,24 @@ window.login = async function () {
   }
 
   status.innerText = "✅ Вхід успішний";
+
+  // load dropdowns (RLS-safe)
+  await loadSelect("locations", "f_from");
+  await loadSelect("locations", "f_to");
+  await loadSelect("crews", "f_crew");
+  await loadSelect("actions", "f_action");
+
   loadLast10();
   loadData();
 };
 
 /* ==============================
-   LAST 10 RECORDS
+   LAST 10 RECORDS (READ ONLY)
 ================================ */
 window.loadLast10 = async function () {
   const { data, error } = await supabaseClient
     .from("flights")
-    .select("date, time, from_m, to_t, crew, video, action")
+    .select("date,time,from_m,to_t,crew,video,action")
     .order("date", { ascending: false })
     .order("time", { ascending: false })
     .limit(10);
@@ -91,6 +98,16 @@ window.loadLast10 = async function () {
    ADD NEW FLIGHT
 ================================ */
 window.addFlight = async function () {
+  if (!f_date.value || !f_time.value) {
+    alert("Дата і час обовʼязкові");
+    return;
+  }
+
+  if (!f_from.value || !f_to.value || !f_crew.value || !f_action.value) {
+    alert("Заповни всі обовʼязкові поля");
+    return;
+  }
+
   const payload = {
     date: f_date.value,
     time: f_time.value,
@@ -101,16 +118,25 @@ window.addFlight = async function () {
     action: f_action.value
   };
 
-  const { error } = await supabaseClient.from("flights").insert(payload);
-  if (error) return alert(error.message);
+  const { error } = await supabaseClient
+    .from("flights")
+    .insert(payload);
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  // reset form
   document.querySelectorAll("#addForm input").forEach(i => i.value = "");
+  document.querySelectorAll("#addForm select").forEach(s => s.selectedIndex = 0);
+
   loadLast10();
   loadData();
 };
 
 /* ==============================
-   FULL TABLE
+   FULL TABLE (EDITABLE)
 ================================ */
 window.loadData = async function () {
   const { data, error } = await supabaseClient
@@ -118,7 +144,10 @@ window.loadData = async function () {
     .select("*")
     .order("id");
 
-  if (error) return alert(error.message);
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
   const table = document.getElementById("table");
   table.innerHTML = "";
@@ -134,9 +163,10 @@ window.loadData = async function () {
       headers.map(h =>
         h === "id"
           ? `<td>${row[h]}</td>`
-          : `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">
-              ${row[h] ?? ""}
-            </td>`
+          : `<td contenteditable
+                 onblur="save(${row.id}, '${h}', this.innerText)">
+                 ${row[h] ?? ""}
+             </td>`
       ).join("") +
       "</tr>";
   });
@@ -151,3 +181,28 @@ window.save = async function (id, field, value) {
     .update({ [field]: value })
     .eq("id", id);
 };
+
+/* ==============================
+   DROPDOWN LOADERS
+================================ */
+async function loadSelect(table, selectId) {
+  const { data, error } = await supabaseClient
+    .from(table)
+    .select("name")
+    .order("name");
+
+  if (error) {
+    console.error("Load failed:", table, error);
+    return;
+  }
+
+  const select = document.getElementById(selectId);
+  select.innerHTML = "<option value=''>— обрати —</option>";
+
+  data.forEach(row => {
+    const option = document.createElement("option");
+    option.value = row.name;
+    option.textContent = row.name;
+    select.appendChild(option);
+  });
+}
