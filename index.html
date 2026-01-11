@@ -1,72 +1,59 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8" />
-  <title>Flights Editor</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 6px; }
-    th { background: #eee; }
-    input { width: 100%; }
-    button { padding: 6px 12px; }
-  </style>
-</head>
-<body>
-
-<h2>Вхід</h2>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Пароль">
-<button onclick="login()">Увійти</button>
-
-<hr>
-
-<h2>Flights</h2>
-<button onclick="loadData()">Оновити</button>
-<table id="table"></table>
-
 <script>
-const supabase = supabase.createClient(
+const supabaseClient = supabase.createClient(
   "https://opuosltpihrhnpyxcxnm.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
 );
 
-async function login() {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value
+window.login = async function () {
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
   });
-  if (error) alert(error.message);
-  else loadData();
-}
 
-async function loadData() {
-  const { data, error } = await supabase
+  if (error) {
+    alert("Помилка входу: " + error.message);
+    return;
+  }
+
+  loadData();
+};
+
+window.loadData = async function () {
+  const { data, error } = await supabaseClient
     .from("flights")
     .select("*")
     .order("id");
-  if (error) return alert(error.message);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
   const table = document.getElementById("table");
   table.innerHTML = "";
 
-  if (data.length === 0) return;
+  if (!data || data.length === 0) return;
 
   const headers = Object.keys(data[0]);
-  table.innerHTML += "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+  table.innerHTML += "<tr>" +
+    headers.map(h => `<th>${h}</th>`).join("") +
+    "</tr>";
 
   data.forEach(row => {
-    table.innerHTML += "<tr>" + headers.map(h =>
-      `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">${row[h] ?? ""}</td>`
-    ).join("") + "</tr>";
+    table.innerHTML += "<tr>" +
+      headers.map(h =>
+        `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">
+          ${row[h] ?? ""}
+        </td>`
+      ).join("") +
+      "</tr>";
   });
-}
+};
 
-async function save(id, field, value) {
-  await supabase.from("flights").update({ [field]: value }).eq("id", id);
-}
+window.save = async function (id, field, value) {
+  await supabaseClient
+    .from("flights")
+    .update({ [field]: value })
+    .eq("id", id);
+};
 </script>
-
-</body>
-</html>
