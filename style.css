@@ -1,79 +1,103 @@
+/* =====================================
+   GLOBAL
+===================================== */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 20px;
+  min-height: 100vh;
   font-family: Arial, sans-serif;
-  background: #eef3f9;
+  color: #222;
+
+  /* BACKGROUND IMAGE */
+  background:
+    linear-gradient(
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.88)
+    ),
+    url("./bg.jpg") no-repeat center center fixed;
+
+  background-size: cover;
 }
 
-/* LOGIN */
-.login-box {
-  width: 300px;
-  background: #fff;
-  padding: 15px;
-  border: 1px solid #ccc;
+/* =====================================
+   HEADERS
+===================================== */
+h2, h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
-/* FORM */
-#addForm {
-  width: 320px;
-  background: #fff;
-  padding: 15px;
-  border: 1px solid #ccc;
-}
-
-input, select {
-  width: 100%;
-  margin-bottom: 6px;
-  padding: 6px;
-}
-
-/* SELECT + DOTS */
-.select-row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.dots-btn {
-  width: 32px;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* TABLE */
+/* =====================================
+   TABLES
+===================================== */
 table {
-  border-collapse: collapse;
   width: 100%;
-  background: #fff;
+  border-collapse: collapse;
+  background: #ffffff;
+  margin-top: 10px;
 }
 
 th, td {
-  border: 1px solid #ccc;
-  padding: 6px;
+  border: 1px solid #cfcfcf;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 14px;
 }
 
-/* DIALOG */
-.dialog {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+th {
+  background: #e9edf3;
+  font-weight: bold;
 }
 
-.dialog.hidden {
-  display: none;
+.readonly td {
+  background: #f7f7f7;
 }
 
-.dialog-box {
-  background: #fff;
+/* =====================================
+   FORMS
+===================================== */
+#addForm {
+  background: #ffffff;
+  border: 1px solid #cfcfcf;
   padding: 15px;
-  width: 260px;
-  border: 1px solid #888;
+  max-width: 400px;
 }
 
-.dialog-actions {
-  display: flex;
-  justify-content: space-between;
+input,
+select {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+button {
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* =====================================
+   STATUS
+===================================== */
+#status {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* =====================================
+   EDITABLE CELLS
+===================================== */
+td[contenteditable] {
+  background: #ffffff;
+}
+
+td[contenteditable]:focus {
+  outline: 2px solid #4a90e2;
+  background: #eef5ff;
 }
