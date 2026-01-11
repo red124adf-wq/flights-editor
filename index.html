@@ -37,14 +37,19 @@
 <hr>
 
 <h3>Додати новий рейс</h3>
+
 <div id="addForm">
   <input type="date" id="f_date">
   <input type="time" id="f_time">
-  <input placeholder="Звідки" id="f_from">
-  <input placeholder="Куди" id="f_to">
-  <input placeholder="Екіпаж" id="f_crew">
+
+  <select id="f_from"></select>
+  <select id="f_to"></select>
+  <select id="f_crew"></select>
+
   <input placeholder="Video" id="f_video">
-  <input placeholder="Action" id="f_action">
+
+  <select id="f_action"></select>
+
   <button onclick="addFlight()">Додати</button>
 </div>
 
