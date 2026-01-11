@@ -87,7 +87,7 @@ window.login = async function () {
 window.loadLast10 = async function () {
   const { data, error } = await supabaseClient
     .from("flights")
-    .select("*")
+    .select("date, time, from_m, to_t, crew, video, action")
     .order("date", { ascending: false })
     .order("time", { ascending: false })
     .limit(10);
@@ -102,17 +102,31 @@ window.loadLast10 = async function () {
 
   if (!data || data.length === 0) return;
 
-  const headers = ["date", "time", "from_m", "to_t", "crew"];
-  table.innerHTML =
-    "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+  const columns = [
+    { key: "date", label: "Дата" },
+    { key: "time", label: "Час" },
+    { key: "from_m", label: "Звідки" },
+    { key: "to_t", label: "Куди" },
+    { key: "crew", label: "Екіпаж" },
+    { key: "video", label: "Відео" },
+    { key: "action", label: "Дії" }
+  ];
 
+  /* Заголовок */
+  table.innerHTML =
+    "<tr>" +
+    columns.map(c => `<th>${c.label}</th>`).join("") +
+    "</tr>";
+
+  /* Рядки */
   data.forEach(row => {
     table.innerHTML +=
       "<tr class='readonly'>" +
-      headers.map(h => `<td>${row[h] ?? ""}</td>`).join("") +
+      columns.map(c => `<td>${row[c.key] ?? ""}</td>`).join("") +
       "</tr>";
   });
 };
+
 
 /* ADD NEW FLIGHT */
 window.addFlight = async function () {
@@ -138,40 +152,6 @@ window.addFlight = async function () {
   document.querySelectorAll("#addForm input").forEach(i => i.value = "");
   loadLast10();
   loadData();
-};
-
-/* FULL TABLE */
-window.loadData = async function () {
-  const { data, error } = await supabaseClient
-    .from("flights")
-    .select("*")
-    .order("id");
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  const table = document.getElementById("table");
-  table.innerHTML = "";
-  if (!data || data.length === 0) return;
-
-  const headers = Object.keys(data[0]);
-  table.innerHTML =
-    "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
-  data.forEach(row => {
-    table.innerHTML +=
-      "<tr>" +
-      headers.map(h =>
-        h === "id"
-          ? `<td>${row[h]}</td>`
-          : `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">
-              ${row[h] ?? ""}
-            </td>`
-      ).join("") +
-      "</tr>";
-  });
 };
 
 /* SAVE CELL */
