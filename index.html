@@ -30,70 +30,29 @@
 <table id="table"></table>
 
 <script>
-/* 1. Створюємо клієнт */
-const supabaseClient = window.supabase.createClient(
-  "https://opuosltpihrhnpyxcxnm.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
-);
-
-/* 2. ЯВНО кладемо функції в window */
 window.login = async function () {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  const status = document.getElementById("status");
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
+  status.innerText = "⏳ Вхід…";
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email,
     password
   });
 
   if (error) {
-    alert("Помилка входу: " + error.message);
+    status.innerText = "❌ Помилка: " + error.message;
     return;
   }
 
-  window.loadData();
-};
+  status.innerText = "✅ Вхід успішний";
+  console.log("AUTH DATA:", data);
 
-window.loadData = async function () {
-  const { data, error } = await supabaseClient
-    .from("flights")
-    .select("*")
-    .order("id");
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  const table = document.getElementById("table");
-  table.innerHTML = "";
-
-  if (!data || data.length === 0) return;
-
-  const headers = Object.keys(data[0]);
-  table.innerHTML +=
-    "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
-  data.forEach(row => {
-    table.innerHTML +=
-      "<tr>" +
-      headers.map(h =>
-        `<td contenteditable onblur="save(${row.id}, '${h}', this.innerText)">
-          ${row[h] ?? ""}
-        </td>`
-      ).join("") +
-      "</tr>";
-  });
-};
-
-window.save = async function (id, field, value) {
-  await supabaseClient
-    .from("flights")
-    .update({ [field]: value })
-    .eq("id", id);
+  await loadData();
 };
 </script>
-
 
 </body>
 </html>
