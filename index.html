@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Flights Editor</title>
 
-  <!-- Supabase UMD -->
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Styles -->
@@ -13,44 +13,71 @@
 
 <body>
 
-<h2>Вхід</h2>
-
-<input id="emailInput" placeholder="Email">
-<input id="passwordInput" type="password" placeholder="Пароль">
-<button onclick="login()">Увійти</button>
-
-<div id="status"></div>
-
-<hr>
-
-<h3>Останні 10 записів</h3>
-<table id="last10"></table>
+<!-- LOGIN -->
+<div class="login-box">
+  <h2>Вхід</h2>
+  <input id="emailInput" placeholder="Email">
+  <input id="passwordInput" type="password" placeholder="Пароль">
+  <button onclick="login()">Увійти</button>
+  <div id="status"></div>
+</div>
 
 <hr>
 
 <h3>Додати новий рейс</h3>
 
 <div id="addForm">
+
   <input type="date" id="f_date">
   <input type="time" id="f_time">
 
-  <select id="f_from"></select>
-  <select id="f_to"></select>
-  <select id="f_crew"></select>
+  <!-- FROM -->
+  <div class="select-row">
+    <select id="f_from"></select>
+    <button class="dots-btn" onclick="openDialog('locations','f_from')">⋯</button>
+  </div>
 
-  <input placeholder="Video" id="f_video">
+  <!-- TO -->
+  <div class="select-row">
+    <select id="f_to"></select>
+    <button class="dots-btn" onclick="openDialog('locations','f_to')">⋯</button>
+  </div>
 
-  <select id="f_action"></select>
+  <!-- CREW -->
+  <div class="select-row">
+    <select id="f_crew"></select>
+    <button class="dots-btn" onclick="openDialog('crews','f_crew')">⋯</button>
+  </div>
+
+  <input id="f_video" placeholder="Video">
+
+  <!-- ACTION -->
+  <div class="select-row">
+    <select id="f_action"></select>
+    <button class="dots-btn" onclick="openDialog('actions','f_action')">⋯</button>
+  </div>
 
   <button onclick="addFlight()">Додати</button>
 </div>
 
 <hr>
 
-<h3>Повна таблиця</h3>
-<table id="table"></table>
+<h3>Останні 10 записів</h3>
+<table id="last10"></table>
+
+<!-- DIALOG -->
+<div id="dictDialog" class="dialog hidden">
+  <div class="dialog-box">
+    <h4 id="dialogTitle">Додати</h4>
+    <input id="dialogInput" placeholder="Нове значення">
+
+    <div class="dialog-actions">
+      <button onclick="confirmDialog()">OK</button>
+      <button onclick="closeDialog()">Скасувати</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
-
 </body>
 </html>
