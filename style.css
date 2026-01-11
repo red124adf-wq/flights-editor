@@ -101,26 +101,3 @@ td[contenteditable]:focus {
   outline: 2px solid #4a90e2;
   background: #eef5ff;
 }
-
-/* =====================================
-   LOGIN BOX
-===================================== */
-.login-box {
-  width: 320px;
-  padding: 15px;
-  background: #ffffffcc;
-  border: 1px solid #cfcfcf;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.login-box input {
-  width: 100%;
-}
-
-.login-box button {
-  width: auto;
-}
