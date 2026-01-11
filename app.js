@@ -169,30 +169,3 @@ async function loadSelect(table, selectId) {
     select.appendChild(option);
   });
 }
-/* ==============================
-   ADD LIST
-================================ */
-window.addAction = async function () {
-  const input = document.getElementById("new_action");
-  const name = input.value.trim();
-
-  if (!name) {
-    alert("Введи назву дії");
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from("actions")
-    .insert({ name });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  input.value = "";
-
-  // Перезавантажуємо список і одразу вибираємо нове
-  await loadSelect("actions", "f_action");
-  document.getElementById("f_action").value = name;
-};
