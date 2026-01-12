@@ -36,6 +36,9 @@
   <hr>
 
   <!-- ADD FLIGHT -->
+  <div class="flight-and-report">
+
+  <div class="flight-block">
   <h3>Додати новий проліт</h3>
 
   <div id="addForm">
@@ -81,9 +84,54 @@
               data-select="f_action">⋯</button>
     </div>
 
-    <button onclick="addFlight()">Додати</button>
+          <button onclick="addFlight()">Додати</button>
+    </div>
   </div>
 
+  <!-- REPORT: МОЛНІЯ -->
+	<div class="report-column">
+	<h3 class="report-title">БпЛА типу МОЛНІЯ</h3>
+
+	<div class="report-block molniya-report">
+
+
+    <div class="period-buttons">
+	<button data-period="all">Весь</button>
+	<button data-period="month">Місяць</button>
+	<button data-period="week">Тиждень</button>
+	<button data-period="day">Доба</button>
+
+  <div class="period-range">
+    <button data-period="range">З</button>
+    <button data-period="range-to">По</button>
+  </div>
+
+  	<input type="date" id="molniya-from" class="date-picker hidden">
+	<input type="date" id="molniya-to" class="date-picker hidden">
+</div>
+    <div class="period-label">
+      За період з — по —
+    </div>
+
+    <table class="report-table">
+      <tr>
+        <th>Результат</th>
+        <th>Кількість</th>
+        <th>   %   </th>
+      </tr>
+      <tr><td>Виявлено</td><td></td><td></td></tr>
+      <tr><td>Збито</td><td></td><td></td></tr>
+      <tr><td>Подавлено</td><td></td><td></td></tr>
+      <tr><td>Зник</td><td></td><td></td></tr>
+      <tr><td>Удар</td><td></td><td></td></tr>
+    </table>
+  </div>
+</div>
+</div>
+
+  </div>
+	</div>
+	</div>
   <hr>
 
   <!-- FULL TABLE -->
