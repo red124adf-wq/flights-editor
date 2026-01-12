@@ -179,3 +179,100 @@ td[contenteditable]:focus {
 .hidden {
   display: none;
 }
+
+/* =====================================
+   FLIGHT + REPORT LAYOUT
+===================================== */
+.flight-and-report {
+  display: flex;
+  gap: 6px; /* мінімальний проміжок */
+  align-items: stretch;
+}
+
+/* =====================================
+   ADD FLIGHT BLOCK
+===================================== */
+.flight-block {
+  display: flex;
+  flex-direction: column;
+  .report-column {
+  flex: 1;
+}
+}
+
+/* =====================================
+   REPORT BLOCK (МОЛНІЯ)
+===================================== */
+.report-block {
+  background: #ffffff;
+  border: 1px solid #cfcfcf;
+  padding: 15px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  height: 350px;
+}
+
+.report-block h3 {
+  margin-top: 0;
+}
+
+.period-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.period-buttons button {
+  padding: 4px 10px;
+}
+
+.period-label {
+  margin: 20px 0 10px;
+  font-size: 14px;
+}
+
+/* =====================================
+   REPORT TABLE
+===================================== */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: auto;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #cfcfcf;
+  padding: 6px;
+  font-size: 14px;
+}
+
+.report-table th {
+  background: #e9edf3;
+}
+
+.period-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.period-range {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.date-hidden {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+}
+
+.date-picker {
+  margin-top: 6px;
+  width: 160px;
+}
