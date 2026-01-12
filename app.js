@@ -7,7 +7,7 @@ const supabaseClient = window.supabase.createClient(
 );
 
 /* ==============================
-   HELPERS (FORMAT)
+   HELPERS
 ================================ */
 function formatDateUA(dateStr) {
   if (!dateStr) return "";
@@ -15,9 +15,35 @@ function formatDateUA(dateStr) {
   return `${d}.${m}.${y}`;
 }
 
+function formatDateForLabel(dateStr) {
+  if (!dateStr) return "—";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}.${m}.${y}`;
+}
+
 function formatTimeNoSeconds(timeStr) {
-  if (!timeStr) return "";
-  return timeStr.slice(0, 5);
+  return timeStr ? timeStr.slice(0, 5) : "";
+}
+
+/* ==============================
+   DATE HELPERS
+================================ */
+function todayISO() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().split("T")[0];
+}
+
+function daysAgoISO(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
+function monthsAgoISO(n) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  return d.toISOString().split("T")[0];
 }
 
 /* ==============================
@@ -27,12 +53,9 @@ window.login = async function () {
   const status = document.getElementById("status");
   status.innerText = "⏳ Вхід…";
 
-  const email = emailInput.value;
-  const password = passwordInput.value;
-
   const { error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
+    email: emailInput.value,
+    password: passwordInput.value
   });
 
   if (error) {
@@ -42,18 +65,16 @@ window.login = async function () {
 
   status.innerText = "✅ Вхід успішний";
 
-  // UI guard
   document.querySelector(".login-box").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
 
-  // load dropdowns
-  await loadSelect("locations", "f_from");
-  await loadSelect("locations", "f_to");
-  await loadSelect("crews", "f_crew");
-  await loadSelect("actions", "f_action");
+  await loadSelect("locations", "f_from", "Звідки");
+	await loadSelect("locations", "f_to", "Куди");
+	await loadSelect("crews", "f_crew", "Екіпаж");
+	await loadSelect("actions", "f_action", "Дія");
 
   loadLast10();
-  loadData();
+  initMolniya();
 };
 
 /* ==============================
@@ -65,67 +86,51 @@ async function requireAuth() {
 }
 
 /* ==============================
-   LAST 10 RECORDS
+   LAST 10
 ================================ */
 window.loadLast10 = async function () {
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("flights")
     .select("date,time,from_m,to_t,crew,video,action")
     .order("date", { ascending: false })
     .order("time", { ascending: false })
     .limit(10);
 
-  if (error) return console.error(error);
-
   const table = document.getElementById("last10");
   table.innerHTML = "";
-  if (!data || data.length === 0) return;
 
-  const rows = data.reverse();
-
-  const columns = [
-    { key: "date", label: "Дата", format: formatDateUA },
-    { key: "time", label: "Час", format: formatTimeNoSeconds },
-    { key: "from_m", label: "Звідки" },
-    { key: "to_t", label: "Куди" },
-    { key: "crew", label: "Екіпаж" },
-    { key: "video", label: "Відео" },
-    { key: "action", label: "Дії" }
-  ];
+  if (!data) return;
 
   table.innerHTML =
-    "<tr>" + columns.map(c => `<th>${c.label}</th>`).join("") + "</tr>";
+    "<tr><th>Дата</th><th>Час</th><th>Звідки</th><th>Куди</th><th>Екіпаж</th><th>Відео</th><th>Дії</th></tr>";
 
-  rows.forEach(row => {
-    table.innerHTML +=
-      "<tr class='readonly'>" +
-      columns.map(c =>
-        `<td>${c.format ? c.format(row[c.key]) : (row[c.key] ?? "")}</td>`
-      ).join("") +
-      "</tr>";
+  data.reverse().forEach(r => {
+    table.innerHTML += `
+      <tr class="readonly">
+        <td>${formatDateUA(r.date)}</td>
+        <td>${formatTimeNoSeconds(r.time)}</td>
+        <td>${r.from_m}</td>
+        <td>${r.to_t}</td>
+        <td>${r.crew}</td>
+        <td>${r.video || ""}</td>
+        <td>${r.action}</td>
+      </tr>`;
   });
 };
 
 /* ==============================
-   ADD NEW FLIGHT
+   ADD FLIGHT
 ================================ */
 window.addFlight = async function () {
-  if (!(await requireAuth())) {
-    alert("Потрібна авторизація");
-    return;
+  if (!(await requireAuth())) return;
+
+  if (!f_date.value || !f_time.value ||
+      !f_from.value || !f_to.value ||
+      !f_crew.value || !f_action.value) {
+    return alert("Заповни всі обовʼязкові поля");
   }
 
-  if (!f_date.value || !f_time.value) {
-    alert("Дата і час обовʼязкові");
-    return;
-  }
-
-  if (!f_from.value || !f_to.value || !f_crew.value || !f_action.value) {
-    alert("Заповни всі обовʼязкові поля");
-    return;
-  }
-
-  const payload = {
+  const { error } = await supabaseClient.from("flights").insert({
     date: f_date.value,
     time: f_time.value,
     from_m: f_from.value,
@@ -133,115 +138,176 @@ window.addFlight = async function () {
     crew: f_crew.value,
     video: f_video.value,
     action: f_action.value
-  };
+  });
 
-  const { error } = await supabaseClient
-    .from("flights")
-    .insert(payload);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
+  if (error) return alert(error.message);
 
   document.querySelectorAll("#addForm input").forEach(i => i.value = "");
   document.querySelectorAll("#addForm select").forEach(s => s.selectedIndex = 0);
 
   loadLast10();
-  loadData();
+  loadMolniyaReport(null, null);
 };
 
 /* ==============================
-   SAVE CELL
+   SELECT LOADERS
 ================================ */
-window.save = async function (id, field, value) {
-  if (!(await requireAuth())) return;
-
-  await supabaseClient
-    .from("flights")
-    .update({ [field]: value })
-    .eq("id", id);
-};
-
-/* ==============================
-   DROPDOWN LOADERS
-================================ */
-async function loadSelect(table, selectId) {
+async function loadSelect(table, id, placeholder) {
   const { data, error } = await supabaseClient
     .from(table)
     .select("name")
     .order("name");
 
   if (error) {
-    console.error("Load failed:", table, error);
+    console.error(error);
     return;
   }
 
-  const select = document.getElementById(selectId);
-  select.innerHTML = "<option value=''>— обрати —</option>";
+  const sel = document.getElementById(id);
+  sel.innerHTML = `<option value="">— ${placeholder} —</option>`;
 
-  data.forEach(row => {
-    const option = document.createElement("option");
-    option.value = row.name;
-    option.textContent = row.name;
-    select.appendChild(option);
+  data.forEach(r => {
+    sel.innerHTML += `<option value="${r.name}">${r.name}</option>`;
   });
 }
 
+
 /* ==============================
-   ADD VALUE DIALOG (UNIVERSAL)
+   M O L N I Y A
 ================================ */
-const addDialog     = document.getElementById("addDialog");
-const dialogInput   = document.getElementById("dialogInput");
-const dialogOk      = document.getElementById("dialogOk");
-const dialogCancel  = document.getElementById("dialogCancel");
+let manualFrom = null;
+let manualTo   = null;
 
-let currentTable  = null;
-let currentSelect = null;
+function setPeriodLabel(from, to) {
+  const el = document.querySelector(".molniya-report .period-label");
+  if (!from && !to) {
+    el.innerText = "За період за весь час";
+  } else {
+    el.innerText = `За період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
+  }
+}
 
-document.querySelectorAll(".add-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
+async function loadMolniyaReport(from, to) {
+  let q = supabaseClient
+    .from("flights")
+    .select("action")
+    .eq("crew", "МОЛНІЯ");
 
-    if (!(await requireAuth())) {
-      alert("Спочатку увійди в систему");
-      return;
-    }
+  if (from) q = q.gte("date", from);
+  if (to)   q = q.lte("date", to);
 
-    currentTable  = btn.dataset.table;
-    currentSelect = btn.dataset.select;
+  const { data } = await q;
 
-    dialogInput.value = "";
-    addDialog.classList.remove("hidden");
-    dialogInput.focus();
-  });
-});
+  const stats = { "Збито":0, "Подавлено":0, "Зник":0, "Удар":0 };
+  data?.forEach(r => stats[r.action] !== undefined && stats[r.action]++);
 
-dialogOk.onclick = async () => {
-  if (!(await requireAuth())) return;
+  const total = Object.values(stats).reduce((a,b)=>a+b,0);
 
-  const value = dialogInput.value.trim();
-  if (!value) return;
+  document.querySelectorAll(".molniya-report .report-table tr")
+    .forEach((tr,i)=>{
+      if(i===0) return;
+      const name = tr.children[0].innerText;
+      const count = name==="Виявлено" ? total : (stats[name]||0);
+      tr.children[1].innerText = count;
+      tr.children[2].innerText = total ? Math.round(count/total*100)+"%" : "0%";
+    });
+}
 
-  const { error } = await supabaseClient
-    .from(currentTable)
-    .insert({ name: value });
+/* ==============================
+   INIT MOLNIYA (ВАЖЛИВО)
+================================ */
+async function getMolniyaFirstDate() {
+  const { data, error } = await supabaseClient
+    .from("flights")
+    .select("date")
+    .eq("crew", "МОЛНІЯ")
+    .order("date", { ascending: true })
+    .limit(1);
 
-  if (error) {
-    alert(error.message);
-    return;
+  if (error || !data || data.length === 0) {
+    return null;
   }
 
-  await loadSelect(currentTable, currentSelect);
-  document.getElementById(currentSelect).value = value;
+  return data[0].date; // YYYY-MM-DD
+}
 
-  addDialog.classList.add("hidden");
-};
+function initMolniyaRange() {
+  const inFrom = document.getElementById("molniya-from");
+  const inTo   = document.getElementById("molniya-to");
 
-dialogCancel.onclick = () => {
-  addDialog.classList.add("hidden");
-};
+  const btnFrom = document.querySelector("[data-period='range']");
+  const btnTo   = document.querySelector("[data-period='range-to']");
 
-dialogInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") dialogOk.click();
-  if (e.key === "Escape") dialogCancel.click();
-});
+  btnFrom.addEventListener("click", () => {
+    inFrom.classList.remove("hidden");
+    inTo.classList.add("hidden");
+  });
+
+  btnTo.addEventListener("click", () => {
+    if (!inFrom.value) {
+      alert("Спочатку оберіть дату «З»");
+      return;
+    }
+    inTo.classList.remove("hidden");
+  });
+
+  inFrom.addEventListener("change", () => {
+    manualFrom = inFrom.value;
+    setPeriodLabel(manualFrom, manualTo);
+    inFrom.classList.add("hidden");
+  });
+
+  inTo.addEventListener("change", () => {
+    manualTo = inTo.value;
+    setPeriodLabel(manualFrom, manualTo);
+    inTo.classList.add("hidden");
+
+    if (manualFrom && manualTo) {
+      loadMolniyaReport(manualFrom, manualTo);
+    }
+  });
+}
+
+function initMolniyaPeriodButtons() {
+  document
+    .querySelectorAll(".molniya-report button[data-period]")
+    .forEach(btn => {
+
+      btn.addEventListener("click", async () => {
+        const p = btn.dataset.period;
+
+        let from = null;
+        let to = todayISO();
+
+        if (p === "all") {
+			const from = await getMolniyaFirstDate();
+			const to = todayISO();
+
+			setPeriodLabel(from, to);
+			loadMolniyaReport(null, null);
+		return;
+		}
+
+
+        if (p === "month") from = monthsAgoISO(1);
+        if (p === "week")  from = daysAgoISO(7);
+        if (p === "day")   from = daysAgoISO(1);
+
+        if (from) {
+          setPeriodLabel(from, to);
+          loadMolniyaReport(from, to);
+        }
+      });
+
+    });
+}
+
+function initMolniya() {
+  initMolniyaPeriodButtons();
+  initMolniyaRange();
+
+  // стартовий стан
+  setPeriodLabel(null, null);
+  loadMolniyaReport(null, null);
+}
+
