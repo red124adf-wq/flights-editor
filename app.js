@@ -42,7 +42,11 @@ window.login = async function () {
 
   status.innerText = "✅ Вхід успішний";
 
-  // load dropdowns (RLS-safe)
+  // UI guard
+  document.querySelector(".login-box").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  // load dropdowns
   await loadSelect("locations", "f_from");
   await loadSelect("locations", "f_to");
   await loadSelect("crews", "f_crew");
@@ -53,7 +57,15 @@ window.login = async function () {
 };
 
 /* ==============================
-   LAST 10 RECORDS (READ ONLY)
+   AUTH GUARD
+================================ */
+async function requireAuth() {
+  const { data } = await supabaseClient.auth.getSession();
+  return !!data.session;
+}
+
+/* ==============================
+   LAST 10 RECORDS
 ================================ */
 window.loadLast10 = async function () {
   const { data, error } = await supabaseClient
@@ -98,6 +110,11 @@ window.loadLast10 = async function () {
    ADD NEW FLIGHT
 ================================ */
 window.addFlight = async function () {
+  if (!(await requireAuth())) {
+    alert("Потрібна авторизація");
+    return;
+  }
+
   if (!f_date.value || !f_time.value) {
     alert("Дата і час обовʼязкові");
     return;
@@ -127,7 +144,6 @@ window.addFlight = async function () {
     return;
   }
 
-  // reset form
   document.querySelectorAll("#addForm input").forEach(i => i.value = "");
   document.querySelectorAll("#addForm select").forEach(s => s.selectedIndex = 0);
 
@@ -139,6 +155,8 @@ window.addFlight = async function () {
    SAVE CELL
 ================================ */
 window.save = async function (id, field, value) {
+  if (!(await requireAuth())) return;
+
   await supabaseClient
     .from("flights")
     .update({ [field]: value })
@@ -169,3 +187,61 @@ async function loadSelect(table, selectId) {
     select.appendChild(option);
   });
 }
+
+/* ==============================
+   ADD VALUE DIALOG (UNIVERSAL)
+================================ */
+const addDialog     = document.getElementById("addDialog");
+const dialogInput   = document.getElementById("dialogInput");
+const dialogOk      = document.getElementById("dialogOk");
+const dialogCancel  = document.getElementById("dialogCancel");
+
+let currentTable  = null;
+let currentSelect = null;
+
+document.querySelectorAll(".add-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+
+    if (!(await requireAuth())) {
+      alert("Спочатку увійди в систему");
+      return;
+    }
+
+    currentTable  = btn.dataset.table;
+    currentSelect = btn.dataset.select;
+
+    dialogInput.value = "";
+    addDialog.classList.remove("hidden");
+    dialogInput.focus();
+  });
+});
+
+dialogOk.onclick = async () => {
+  if (!(await requireAuth())) return;
+
+  const value = dialogInput.value.trim();
+  if (!value) return;
+
+  const { error } = await supabaseClient
+    .from(currentTable)
+    .insert({ name: value });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadSelect(currentTable, currentSelect);
+  document.getElementById(currentSelect).value = value;
+
+  addDialog.classList.add("hidden");
+};
+
+dialogCancel.onclick = () => {
+  addDialog.classList.add("hidden");
+};
+
+dialogInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") dialogOk.click();
+  if (e.key === "Escape") dialogCancel.click();
+});
