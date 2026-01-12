@@ -18,7 +18,7 @@ body {
       rgba(255, 255, 255, 0.88),
       rgba(255, 255, 255, 0.88)
     ),
-    url("./bg.jpg") no-repeat center center fixed;
+    url("./bg.png") no-repeat center center fixed;
 
   background-size: cover;
 }
@@ -83,6 +83,27 @@ button {
 }
 
 /* =====================================
+   SELECT + ADD BUTTON ROW
+===================================== */
+.select-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.select-row select {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.add-btn {
+  width: 36px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* =====================================
    STATUS
 ===================================== */
 #status {
@@ -100,4 +121,61 @@ td[contenteditable] {
 td[contenteditable]:focus {
   outline: 2px solid #4a90e2;
   background: #eef5ff;
+}
+
+/* =====================================
+   LOGIN BOX (NON-FIXED)
+===================================== */
+.login-box {
+  width: 300px;
+  background: #ffffff;
+  padding: 15px;
+  border: 1px solid #cfcfcf;
+  margin-bottom: 20px;
+}
+
+.login-box input {
+  width: 100%;
+}
+
+.login-box button {
+  width: auto;
+}
+
+/* =====================================
+   DIALOG (ADD VALUE)
+===================================== */
+.dialog {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog-box {
+  background: #ffffff;
+  padding: 20px;
+  border: 1px solid #cfcfcf;
+  min-width: 300px;
+}
+
+.dialog-box input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* =====================================
+   HELPERS
+===================================== */
+.hidden {
+  display: none;
 }
