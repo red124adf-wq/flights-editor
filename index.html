@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Flights Editor</title>
 
-  <!-- Supabase -->
+  <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Styles -->
@@ -16,68 +16,96 @@
 <!-- LOGIN -->
 <div class="login-box">
   <h2>Вхід</h2>
+
   <input id="emailInput" placeholder="Email">
   <input id="passwordInput" type="password" placeholder="Пароль">
   <button onclick="login()">Увійти</button>
+
   <div id="status"></div>
 </div>
 
-<hr>
+<!-- APP (HIDDEN UNTIL LOGIN) -->
+<div id="app" class="hidden">
 
-<h3>Додати новий рейс</h3>
+  <hr>
 
-<div id="addForm">
+  <!-- LAST 10 -->
+  <h3>Крайні 10 записів</h3>
+  <table id="last10"></table>
 
-  <input type="date" id="f_date">
-  <input type="time" id="f_time">
+  <hr>
 
-  <!-- FROM -->
-  <div class="select-row">
-    <select id="f_from"></select>
-    <button class="dots-btn" onclick="openDialog('locations','f_from')">⋯</button>
+  <!-- ADD FLIGHT -->
+  <h3>Додати новий проліт</h3>
+
+  <div id="addForm">
+
+    <input type="date" id="f_date">
+    <input type="time" id="f_time">
+
+    <!-- FROM (locations) -->
+    <div class="select-row">
+      <select id="f_from"></select>
+      <button type="button"
+              class="add-btn"
+              data-table="locations"
+              data-select="f_from">⋯</button>
+    </div>
+
+    <!-- TO (locations) -->
+    <div class="select-row">
+      <select id="f_to"></select>
+      <button type="button"
+              class="add-btn"
+              data-table="locations"
+              data-select="f_to">⋯</button>
+    </div>
+
+    <!-- CREW (crews) -->
+    <div class="select-row">
+      <select id="f_crew"></select>
+      <button type="button"
+              class="add-btn"
+              data-table="crews"
+              data-select="f_crew">⋯</button>
+    </div>
+
+    <input placeholder="Video" id="f_video">
+
+    <!-- ACTION (actions) -->
+    <div class="select-row">
+      <select id="f_action"></select>
+      <button type="button"
+              class="add-btn"
+              data-table="actions"
+              data-select="f_action">⋯</button>
+    </div>
+
+    <button onclick="addFlight()">Додати</button>
   </div>
 
-  <!-- TO -->
-  <div class="select-row">
-    <select id="f_to"></select>
-    <button class="dots-btn" onclick="openDialog('locations','f_to')">⋯</button>
-  </div>
+  <hr>
 
-  <!-- CREW -->
-  <div class="select-row">
-    <select id="f_crew"></select>
-    <button class="dots-btn" onclick="openDialog('crews','f_crew')">⋯</button>
-  </div>
+  <!-- FULL TABLE -->
+  <table id="table"></table>
 
-  <input id="f_video" placeholder="Video">
-
-  <!-- ACTION -->
-  <div class="select-row">
-    <select id="f_action"></select>
-    <button class="dots-btn" onclick="openDialog('actions','f_action')">⋯</button>
-  </div>
-
-  <button onclick="addFlight()">Додати</button>
 </div>
 
-<hr>
-
-<h3>Останні 10 записів</h3>
-<table id="last10"></table>
-
-<!-- DIALOG -->
-<div id="dictDialog" class="dialog hidden">
+<!-- ADD VALUE DIALOG -->
+<div id="addDialog" class="dialog hidden">
   <div class="dialog-box">
-    <h4 id="dialogTitle">Додати</h4>
+    <h3 id="dialogTitle">Додати значення</h3>
+
     <input id="dialogInput" placeholder="Нове значення">
 
     <div class="dialog-actions">
-      <button onclick="confirmDialog()">OK</button>
-      <button onclick="closeDialog()">Скасувати</button>
+      <button id="dialogOk">OK</button>
+      <button id="dialogCancel">Скасувати</button>
     </div>
   </div>
 </div>
 
 <script src="app.js"></script>
+
 </body>
 </html>
