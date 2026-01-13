@@ -195,10 +195,12 @@ td[contenteditable]:focus {
 .flight-block {
   display: flex;
   flex-direction: column;
-  .report-column {
+}
+
+.report-column {
   flex: 1;
 }
-}
+
 
 /* =====================================
    REPORT BLOCK (МОЛНІЯ)
@@ -254,25 +256,24 @@ td[contenteditable]:focus {
 }
 
 .period-buttons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
   gap: 6px;
-  align-items: center;
+  margin-bottom: 6px;
 }
 
-.period-range {
-  display: flex;
+.date-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* два рівні стовпці */
   gap: 6px;
-  align-items: center;
+  width: 100%;
 }
 
-.date-hidden {
-  position: absolute;
-  left: -9999px;
-  opacity: 0;
-}
-
-.date-picker {
-  margin-top: 6px;
-  width: 160px;
+.date-range input[type="date"] {
+  width: 151px;
+  height: 30px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  border: 1px solid #999;
+  font-size: 14px;
 }
