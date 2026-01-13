@@ -30,8 +30,10 @@ function formatTimeNoSeconds(timeStr) {
 ================================ */
 function todayISO() {
   const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString().split("T")[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function daysAgoISO(n) {
@@ -69,9 +71,9 @@ window.login = async function () {
   document.getElementById("app").classList.remove("hidden");
 
   await loadSelect("locations", "f_from", "Звідки");
-	await loadSelect("locations", "f_to", "Куди");
-	await loadSelect("crews", "f_crew", "Екіпаж");
-	await loadSelect("actions", "f_action", "Дія");
+  await loadSelect("locations", "f_to", "Куди");
+  await loadSelect("crews", "f_crew", "Екіпаж");
+  await loadSelect("actions", "f_action", "Дія");
 
   loadLast10();
   initMolniya();
@@ -146,7 +148,7 @@ window.addFlight = async function () {
   document.querySelectorAll("#addForm select").forEach(s => s.selectedIndex = 0);
 
   loadLast10();
-  loadMolniyaReport(null, null);
+  loadMolniyaReport(manualFrom, manualTo);
 };
 
 /* ==============================
@@ -171,6 +173,46 @@ async function loadSelect(table, id, placeholder) {
   });
 }
 
+/* ==============================
+   ADD VALUE (⋯ BUTTONS)
+================================ */
+let currentTable = null;
+let currentSelectId = null;
+
+document.querySelectorAll(".add-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentTable = btn.dataset.table;
+    currentSelectId = btn.dataset.select;
+
+    document.getElementById("dialogTitle").innerText =
+      `Додати значення до "${currentTable}"`;
+
+    document.getElementById("dialogInput").value = "";
+    document.getElementById("addDialog").classList.remove("hidden");
+  });
+});
+
+document.getElementById("dialogCancel").addEventListener("click", () => {
+  document.getElementById("addDialog").classList.add("hidden");
+});
+
+document.getElementById("dialogOk").addEventListener("click", async () => {
+  const value = document.getElementById("dialogInput").value.trim();
+  if (!value) return;
+
+  const { error } = await supabaseClient
+    .from(currentTable)
+    .insert({ name: value });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadSelect(currentTable, currentSelectId, "обрати");
+  document.getElementById(currentSelectId).value = value;
+  document.getElementById("addDialog").classList.add("hidden");
+});
 
 /* ==============================
    M O L N I Y A
@@ -180,11 +222,7 @@ let manualTo   = null;
 
 function setPeriodLabel(from, to) {
   const el = document.querySelector(".molniya-report .period-label");
-  if (!from && !to) {
-    el.innerText = "За період за весь час";
-  } else {
-    el.innerText = `За період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
-  }
+  el.innerText = `За період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
 }
 
 async function loadMolniyaReport(from, to) {
@@ -214,57 +252,49 @@ async function loadMolniyaReport(from, to) {
 }
 
 /* ==============================
-   INIT MOLNIYA (ВАЖЛИВО)
+   INIT MOLNIYA
 ================================ */
 async function getMolniyaFirstDate() {
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("flights")
     .select("date")
     .eq("crew", "МОЛНІЯ")
     .order("date", { ascending: true })
     .limit(1);
 
-  if (error || !data || data.length === 0) {
-    return null;
-  }
-
-  return data[0].date; // YYYY-MM-DD
+  return data?.[0]?.date || todayISO();
 }
 
 function initMolniyaRange() {
   const inFrom = document.getElementById("molniya-from");
   const inTo   = document.getElementById("molniya-to");
 
-  const btnFrom = document.querySelector("[data-period='range']");
-  const btnTo   = document.querySelector("[data-period='range-to']");
+  const today = todayISO();
+  inFrom.value = today;
+  inTo.value = today;
 
-  btnFrom.addEventListener("click", () => {
-    inFrom.classList.remove("hidden");
-    inTo.classList.add("hidden");
-  });
+  manualFrom = today;
+  manualTo = today;
 
-  btnTo.addEventListener("click", () => {
-    if (!inFrom.value) {
-      alert("Спочатку оберіть дату «З»");
-      return;
-    }
-    inTo.classList.remove("hidden");
-  });
+  setPeriodLabel(manualFrom, manualTo);
+  loadMolniyaReport(manualFrom, manualTo);
 
-  inFrom.addEventListener("change", () => {
+  inFrom.addEventListener("input", () => {
     manualFrom = inFrom.value;
-    setPeriodLabel(manualFrom, manualTo);
-    inFrom.classList.add("hidden");
-  });
-
-  inTo.addEventListener("change", () => {
+    if (inTo.value < manualFrom) inTo.value = manualFrom;
     manualTo = inTo.value;
     setPeriodLabel(manualFrom, manualTo);
-    inTo.classList.add("hidden");
+    loadMolniyaReport(manualFrom, manualTo);
+  });
 
-    if (manualFrom && manualTo) {
-      loadMolniyaReport(manualFrom, manualTo);
+  inTo.addEventListener("input", () => {
+    manualTo = inTo.value;
+    if (manualTo < manualFrom) {
+      manualTo = manualFrom;
+      inTo.value = manualFrom;
     }
+    setPeriodLabel(manualFrom, manualTo);
+    loadMolniyaReport(manualFrom, manualTo);
   });
 }
 
@@ -272,42 +302,30 @@ function initMolniyaPeriodButtons() {
   document
     .querySelectorAll(".molniya-report button[data-period]")
     .forEach(btn => {
-
       btn.addEventListener("click", async () => {
+        let from, to = todayISO();
         const p = btn.dataset.period;
 
-        let from = null;
-        let to = todayISO();
-
         if (p === "all") {
-			const from = await getMolniyaFirstDate();
-			const to = todayISO();
-
-			setPeriodLabel(from, to);
-			loadMolniyaReport(null, null);
-		return;
-		}
-
-
+          from = await getMolniyaFirstDate();
+        }
         if (p === "month") from = monthsAgoISO(1);
         if (p === "week")  from = daysAgoISO(7);
-        if (p === "day")   from = daysAgoISO(1);
+        if (p === "day")   from = todayISO();
 
-        if (from) {
-          setPeriodLabel(from, to);
-          loadMolniyaReport(from, to);
-        }
+        manualFrom = from;
+        manualTo = to;
+
+        document.getElementById("molniya-from").value = from;
+        document.getElementById("molniya-to").value = to;
+
+        setPeriodLabel(from, to);
+        loadMolniyaReport(from, to);
       });
-
     });
 }
 
 function initMolniya() {
   initMolniyaPeriodButtons();
   initMolniyaRange();
-
-  // стартовий стан
-  setPeriodLabel(null, null);
-  loadMolniyaReport(null, null);
 }
-
