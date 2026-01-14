@@ -5,6 +5,7 @@ const supabaseClient = window.supabase.createClient(
   "https://opuosltpihrhnpyxcxnm.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
 );
+const GLOBAL_START_DATE = "2025-12-05";
 
 /* ==============================
    HELPERS
@@ -77,6 +78,7 @@ window.login = async function () {
 
   loadLast10();
   initMolniya();
+  initFPV();
 };
 
 /* ==============================
@@ -219,10 +221,17 @@ document.getElementById("dialogOk").addEventListener("click", async () => {
 ================================ */
 let manualFrom = null;
 let manualTo   = null;
+let fpvFrom = null;
+let fpvTo   = null;
 
 function setPeriodLabel(from, to) {
   const el = document.querySelector(".molniya-report .period-label");
-  el.innerText = `За період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
+  el.innerText = `Стат. за період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
+}
+
+function setFPVPeriodLabel(from, to) {
+  const el = document.querySelector(".fpv-report .period-label");
+  el.innerText = `Стат. за період з ${formatDateForLabel(from)} по ${formatDateForLabel(to)}`;
 }
 
 async function loadMolniyaReport(from, to) {
@@ -251,19 +260,36 @@ async function loadMolniyaReport(from, to) {
     });
 }
 
+async function loadFPVReport(from, to) {
+  let q = supabaseClient
+    .from("flights")
+    .select("action")
+    .not("crew", "in", '("МОЛНІЯ","ОПТОВОЛОКНО")');
+
+  if (from) q = q.gte("date", from);
+  if (to)   q = q.lte("date", to);
+
+  const { data } = await q;
+
+  const stats = { "Збито":0, "Подавлено":0, "Зник":0, "Удар":0 };
+  data?.forEach(r => stats[r.action] !== undefined && stats[r.action]++);
+
+  const total = Object.values(stats).reduce((a,b)=>a+b,0);
+
+  document
+    .querySelectorAll(".fpv-report .report-table tr")
+    .forEach((tr,i)=>{
+      if(i===0) return;
+      const name = tr.children[0].innerText;
+      const count = name==="Виявлено" ? total : (stats[name]||0);
+      tr.children[1].innerText = count;
+      tr.children[2].innerText = total ? Math.round(count/total*100)+"%" : "0%";
+    });
+}
+
 /* ==============================
    INIT MOLNIYA
 ================================ */
-async function getMolniyaFirstDate() {
-  const { data } = await supabaseClient
-    .from("flights")
-    .select("date")
-    .eq("crew", "МОЛНІЯ")
-    .order("date", { ascending: true })
-    .limit(1);
-
-  return data?.[0]?.date || todayISO();
-}
 
 function initMolniyaRange() {
   const inFrom = document.getElementById("molniya-from");
@@ -298,6 +324,39 @@ function initMolniyaRange() {
   });
 }
 
+function initFPVRange() {
+  const inFrom = document.getElementById("fpv-from");
+  const inTo   = document.getElementById("fpv-to");
+
+  const today = todayISO();
+  inFrom.value = today;
+  inTo.value = today;
+
+  fpvFrom = today;
+  fpvTo = today;
+
+  setFPVPeriodLabel(fpvFrom, fpvTo);
+  loadFPVReport(fpvFrom, fpvTo);
+
+  inFrom.addEventListener("input", () => {
+    fpvFrom = inFrom.value;
+    if (inTo.value < fpvFrom) inTo.value = fpvFrom;
+    fpvTo = inTo.value;
+    setFPVPeriodLabel(fpvFrom, fpvTo);
+    loadFPVReport(fpvFrom, fpvTo);
+  });
+
+  inTo.addEventListener("input", () => {
+    fpvTo = inTo.value;
+    if (fpvTo < fpvFrom) {
+      fpvTo = fpvFrom;
+      inTo.value = fpvFrom;
+    }
+    setFPVPeriodLabel(fpvFrom, fpvTo);
+    loadFPVReport(fpvFrom, fpvTo);
+  });
+}
+
 function initMolniyaPeriodButtons() {
   document
     .querySelectorAll(".molniya-report button[data-period]")
@@ -307,7 +366,7 @@ function initMolniyaPeriodButtons() {
         const p = btn.dataset.period;
 
         if (p === "all") {
-          from = await getMolniyaFirstDate();
+			from = GLOBAL_START_DATE;
         }
         if (p === "month") from = monthsAgoISO(1);
         if (p === "week")  from = daysAgoISO(7);
@@ -325,7 +384,37 @@ function initMolniyaPeriodButtons() {
     });
 }
 
+function initFPVPeriodButtons() {
+  document
+    .querySelectorAll(".fpv-report button[data-period]")
+    .forEach(btn => {
+      btn.addEventListener("click", async () => {
+        let from, to = todayISO();
+        const p = btn.dataset.period;
+
+        if (p === "all")   from = GLOBAL_START_DATE;;
+        if (p === "month") from = monthsAgoISO(1);
+        if (p === "week")  from = daysAgoISO(7);
+        if (p === "day")   from = todayISO();
+
+        fpvFrom = from;
+        fpvTo = to;
+
+        document.getElementById("fpv-from").value = from;
+        document.getElementById("fpv-to").value = to;
+
+        setFPVPeriodLabel(from, to);
+        loadFPVReport(from, to);
+      });
+    });
+}
+
 function initMolniya() {
   initMolniyaPeriodButtons();
   initMolniyaRange();
+}
+
+function initFPV() {
+  initFPVPeriodButtons();
+  initFPVRange();
 }
