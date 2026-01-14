@@ -195,6 +195,8 @@ td[contenteditable]:focus {
 .flight-block {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  width: 300px; /* або 380–420, як комфортно */
 }
 
 .report-column {
@@ -276,4 +278,15 @@ td[contenteditable]:focus {
   box-sizing: border-box;
   border: 1px solid #999;
   font-size: 14px;
+}
+
+.reports-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.report-wrapper {
+  display: flex;
+  flex-direction: column;
 }
