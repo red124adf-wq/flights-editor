@@ -90,6 +90,11 @@
 
     <!-- REPORT -->
     <div class="report-column">
+	
+	<div class="reports-row">
+	<!-- МОЛНІЯ -->
+	
+	<div class="report-wrapper">
       <h3 class="report-title">БпЛА типу МОЛНІЯ</h3>
 
       <div class="report-block molniya-report">
@@ -107,7 +112,7 @@
         </div>
 
         <div class="period-label">
-          За період з — по —
+          Статистика за період з — по —
         </div>
 
         <table class="report-table">
@@ -124,8 +129,47 @@
         </table>
 
       </div>
-    </div>
+	  </div>
+	  <!-- FPV -->
+	  <div class="report-wrapper">
+	<h3 class="report-title">БпЛА типу ФПВ</h3>
+	<div class="report-block fpv-report">
 
+		<div class="period-buttons">
+		<button data-period="all">Весь</button>
+		<button data-period="month">Місяць</button>
+		<button data-period="week">Тиждень</button>
+		<button data-period="day">Доба</button>
+		</div>
+
+		<div class="date-range">
+		<input type="date" id="fpv-from">
+		<input type="date" id="fpv-to">
+		</div>
+
+		<div class="period-label">
+		Статистика за період з — по —
+		</div>
+
+		<table class="report-table">
+		<tr>
+			<th>Результат</th>
+			<th>Кількість</th>
+			<th>%</th>
+		</tr>
+		<tr><td>Виявлено</td><td></td><td></td></tr>
+		<tr><td>Збито</td><td></td><td></td></tr>
+		<tr><td>Подавлено</td><td></td><td></td></tr>
+		<tr><td>Зник</td><td></td><td></td></tr>
+		<tr><td>Удар</td><td></td><td></td></tr>
+		</table>
+
+	</div>
+	</div>
+	</div>
+	
+    </div> <!-- *** -->
+	
   </div>
 
   <hr>
