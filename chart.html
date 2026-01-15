@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Активність БпЛА МОЛНІЯ</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="chart.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Chart.js datalabels -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+
+<body>
+
+  <h2>Активність БпЛА типу «МОЛНІЯ»</h2>
+
+  <div class="chart-toolbar">
+    <div class="chart-subtitle">
+      Період: крайній місяць
+    </div>
+
+    <div class="chart-controls">
+      <label for="baseDate">Дата відліку:</label>
+      <input type="date" id="baseDate">
+    </div>
+  </div>
+
+  <div class="chart-box">
+    <canvas id="molniyaChart"></canvas>
+  </div>
+
+  <!-- Logic -->
+  <script src="chart.js"></script>
+</body>
+</html>
