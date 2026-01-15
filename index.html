@@ -30,7 +30,28 @@
   <hr>
 
   <!-- LAST 10 -->
-  <h3>Крайні 10 записів</h3>
+	<div class="last-records-header">
+	<h3>Крайні 10 записів</h3>
+
+	<div class="header-actions">
+    <button
+      class="chart-btn"
+      title="Показати графік активності"
+      onclick="window.open('chart.html', '_blank')"
+    >
+      📈
+    </button>
+
+    <button
+      class="chart-btn"
+      title="Показати звіт по БпЛА"
+      onclick="window.open('report.html', '_blank')"
+    >
+      📄
+    </button>
+  </div>
+</div>
+
   <table id="last10"></table>
 
   <hr>
