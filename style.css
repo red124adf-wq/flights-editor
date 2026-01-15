@@ -290,3 +290,46 @@ td[contenteditable]:focus {
   display: flex;
   flex-direction: column;
 }
+
+/* =====================================
+   REPORT GRAPH
+===================================== */
+.last-records-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.last-records-header h2 {
+  margin: 0;
+}
+
+.chart-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  border: 1px solid #cfcfcf;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chart-btn:hover {
+  background: #f0f4ff;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.chart-btn:active {
+  transform: translateY(1px);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
