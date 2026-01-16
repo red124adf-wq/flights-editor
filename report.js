@@ -88,13 +88,23 @@ async function loadStatsByFilter(filterFn, from, to) {
     const ts = new Date(`${row.date}T${row.time}`);
     if (ts < from || ts >= to) return;
 
-    if (map[row.action] !== undefined) {
-      map[row.action]++;
-    }
+    // рахуємо конкретні дії
+	if (map[row.action] !== undefined) {
+  		map[row.action]++;
+	}
 
-    if (["Збито", "Подавлено", "Удар"].includes(row.action)) {
-      map["Виявлено"]++;
-    }
+	// бойові дії → автоматично "Виявлено"
+	if (["Збито", "Подавлено", "Удар", "Зникло"].includes(row.action)) {
+  		map["Виявлено"]++;
+	}
+// OPTIKA + "Відсутні" → теж "Виявлено"
+if (
+  row.action === "Відсутні" &&
+  isOptic(row.crew)
+) {
+  map["Виявлено"]++;
+}
+
   });
 
   return map;
