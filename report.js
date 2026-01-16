@@ -1,8 +1,5 @@
 // === Supabase client ===
-const supabaseClient = window.supabase.createClient(
-  "https://opuosltpihrhnpyxcxnm.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
-);
+
 
 function isMolniya(crew) {
   return crew === "МОЛНІЯ";
@@ -89,14 +86,15 @@ async function loadStatsByFilter(filterFn, from, to) {
     if (ts < from || ts >= to) return;
 
     // рахуємо конкретні дії
-	if (map[row.action] !== undefined) {
-  		map[row.action]++;
-	}
+if (map[row.action] !== undefined) {
+  map[row.action]++;
+}
 
-	// бойові дії → автоматично "Виявлено"
-	if (["Збито", "Подавлено", "Удар", "Зникло"].includes(row.action)) {
-  		map["Виявлено"]++;
-	}
+// бойові дії → автоматично "Виявлено"
+if (["Збито", "Подавлено", "Удар", "Зникло"].includes(row.action)) {
+  map["Виявлено"]++;
+}
+
 // OPTIKA + "Відсутні" → теж "Виявлено"
 if (
   row.action === "Відсутні" &&
@@ -187,19 +185,33 @@ async function loadDailySummary(droneType) {
 function renderSummary(elId, summary) {
   if (!summary) return;
 
-  document.getElementById(elId).innerHTML = `
-  <div class="summary-text">
-    <div class="summary-title">
-      🛩 За попередній звітний період (${summary.report_date})
-    </div>
+  // report_date = YYYY-MM-DD
+  const baseDate = new Date(summary.report_date + "T05:30:00");
 
-    <ul class="summary-list">
-      <li>🔍 Виявлено: <strong>${summary.detected}</strong></li>
-      <li>🎯 Збито: <strong>${summary.destroyed}</strong></li>
-      <li>📡 Подавлено: <strong>${summary.suppressed}</strong></li>
-      <li>❓ Зникло: <strong>${summary.lost}</strong></li>
-      <li>💥 Удар: <strong>${summary.strike}</strong></li>
-    </ul>
-  </div>
-`;
+  const from = new Date(baseDate);
+  const to = new Date(baseDate);
+  to.setDate(to.getDate() + 1);
+
+  document.getElementById(elId).innerHTML = `
+    <div class="summary-text">
+      <div class="summary-title">
+        ← За попередній звітний період
+        (${formatDateTimeUA(from)} - ${formatDateTimeUA(to)})
+      </div>
+
+      <ul class="summary-list">
+        <li>🔍 Виявлено: <strong>${summary.detected}</strong></li>
+        <li>🎯 Збито: <strong>${summary.destroyed}</strong></li>
+        <li>📡 Подавлено: <strong>${summary.suppressed}</strong></li>
+        <li>❓ Зникло: <strong>${summary.lost}</strong></li>
+        <li>💥 Удар: <strong>${summary.strike}</strong></li>
+      </ul>
+    </div>
+  `;
+}
+
+function formatDateTimeUA(d) {
+  const pad = n => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ` +
+         `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
