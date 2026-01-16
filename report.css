@@ -1,51 +1,126 @@
+/* ===============================
+   Base
+=============================== */
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   background: #0f172a;
   color: #e5e7eb;
-  padding: 20px;
+  margin: 20px;
 }
+
+/* ===============================
+   Headings
+=============================== */
 
 h1 {
-  margin-bottom: 5px;
+  text-align: center;
+  margin-bottom: 20px; /* відділяє заголовок від періоду */
 }
 
-.report-period {
-  margin-bottom: 25px;
-  color: #94a3b8;
+h2 {
+  margin: 0 0 12px; /* відділяє заголовок таблиці від самої таблиці */
+  color: #38bdf8;
+  text-align: center;
 }
+
+/* ===============================
+   Report period
+=============================== */
+
+.report-period {
+  margin-bottom: 32px; /* головний вертикальний розрив */
+  font-size: 15px;
+  color: #cbd5f5;
+  text-align: left;
+}
+
+/* ===============================
+   Tables layout
+=============================== */
 
 .tables {
   display: flex;
-  gap: 30px;
-  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
 }
 
 .table-box {
   flex: 1;
-  min-width: 320px;
+  min-width: 300px;
 }
 
-h2 {
-  margin-bottom: 10px;
-}
+/* ===============================
+   Table
+=============================== */
 
 table {
   width: 100%;
   border-collapse: collapse;
   background: #020617;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-th, td {
-  border: 1px solid #1e293b;
+th,
+td {
   padding: 8px 10px;
   text-align: center;
+  border-bottom: 1px solid #1e293b;
 }
 
 th {
   background: #020617;
-  font-weight: bold;
+  color: #7dd3fc;
+  font-weight: 600;
 }
 
-tr:nth-child(even) {
-  background: #020617;
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
+
+/* ===============================
+   Responsive
+=============================== */
+
+@media (max-width: 900px) {
+  .tables {
+    flex-direction: column;
+  }
+}
+
+.daily-summary {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #020617;
+  border-left: 3px solid #38bdf8;
+  border-right: 3px solid #38bdf8;
+  border-top: 3px solid #38bdf8;
+  border-bottom: 3px solid #38bdf8;
+  border-radius: 6px;
+}
+
+.summary-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7dd3fc;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.summary-list li {
+  font-size: 14px;
+  color: #e5e7eb;
+  line-height: 1.7;
+  display: flex;
+  gap: 8px;
+}
+
