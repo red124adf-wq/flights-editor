@@ -4,6 +4,25 @@ const supabaseClient = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wdW9zbHRwaWhyaG5weXhjeG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgwNTM4NjgsImV4cCI6MjA4MzYyOTg2OH0.3oLcak4XWxEFaP81HrzCss9BwekV6HoNB--82Zp3-uE"
 );
 
+function isMolniya(crew) {
+  return crew === "МОЛНІЯ";
+}
+
+function isOptic(crew) {
+  if (!crew) return false;
+  const c = crew.toUpperCase();
+  return (
+    c.includes("OPTIC") ||
+    c.includes("ОПТИК") ||
+    c.includes("FIBER") ||
+    c.includes("FIBRE")
+  );
+}
+
+function isFPV(crew) {
+  return !isMolniya(crew) && !isOptic(crew);
+}
+
 // === Константи ===
 const RESULT_ORDER = [
   "Виявлено",
@@ -43,25 +62,18 @@ function getPeriods() {
 // === Завантаження статистики ===
 // isMolniya = true  → crew = 'МОЛНІЯ'
 // isMolniya = false → crew != 'МОЛНІЯ'
-async function loadStats(isMolniya, from, to) {
-  let query = supabaseClient
+async function loadStatsByFilter(filterFn, from, to) {
+  const { data, error } = await supabaseClient
     .from("flights")
-    .select("date, time, action")
+    .select("date, time, action, crew")
     .gte("date", from.toISOString().split("T")[0])
     .lte("date", to.toISOString().split("T")[0]);
-
-  query = isMolniya
-    ? query.eq("crew", "МОЛНІЯ")
-    : query.neq("crew", "МОЛНІЯ");
-
-  const { data, error } = await query;
 
   if (error) {
     console.error(error);
     return {};
   }
 
-  // 🔒 ЖОРСТКА ініціалізація під таблицю
   const map = {
     "Виявлено": 0,
     "Збито": 0,
@@ -71,25 +83,23 @@ async function loadStats(isMolniya, from, to) {
   };
 
   data.forEach(row => {
+    if (!filterFn(row.crew)) return;
+
     const ts = new Date(`${row.date}T${row.time}`);
+    if (ts < from || ts >= to) return;
 
-    if (ts >= from && ts <= to) {
-      const action = row.action;
+    if (map[row.action] !== undefined) {
+      map[row.action]++;
+    }
 
-      // рахунок конкретної дії
-      if (map[action] !== undefined) {
-        map[action]++;
-      }
-
-      // будь-яка бойова дія = виявлено
-      if (["Збито", "Подавлено", "Удар"].includes(action)) {
-        map["Виявлено"]++;
-      }
+    if (["Збито", "Подавлено", "Удар"].includes(row.action)) {
+      map["Виявлено"]++;
     }
   });
 
   return map;
 }
+
 
 // === Побудова таблиці ===
 function renderTable(tableId, periodStats, dayStats) {
@@ -122,12 +132,64 @@ function renderTable(tableId, periodStats, dayStats) {
   document.getElementById("periodInfo").innerText =
     `Звітний період: ${reportStart.toLocaleString("uk-UA")} — ${now.toLocaleString("uk-UA")}`;
 
-  const molniyaPeriod = await loadStats(true, reportStart, now);
-  const molniyaDay = await loadStats(true, startOfDay, now);
+  const molniyaPeriod = await loadStatsByFilter(isMolniya, reportStart, now);
+  const molniyaDay    = await loadStatsByFilter(isMolniya, startOfDay, now);
 
-  const vpvPeriod = await loadStats(false, reportStart, now);
-  const vpvDay = await loadStats(false, startOfDay, now);
+  const fpvPeriod = await loadStatsByFilter(isFPV, reportStart, now);
+  const fpvDay    = await loadStatsByFilter(isFPV, startOfDay, now);
+
+  const opticPeriod = await loadStatsByFilter(isOptic, reportStart, now);
+  const opticDay    = await loadStatsByFilter(isOptic, startOfDay, now);
 
   renderTable("table-molniya", molniyaPeriod, molniyaDay);
-  renderTable("table-vpv", vpvPeriod, vpvDay);
+  renderTable("table-fpv", fpvPeriod, fpvDay);
+  renderTable("table-optic", opticPeriod, opticDay);
+  
+	const molniyaSummary = await loadDailySummary("MOLNIYA");
+	renderSummary("summary-molniya", molniyaSummary);
+
+	const fpvSummary = await loadDailySummary("FPV");
+	renderSummary("summary-fpv", fpvSummary);
+
+	const opticSummary = await loadDailySummary("OPTIC");
+	renderSummary("summary-optic", opticSummary);
+
 })();
+
+// === ВЧОРАШНІЙ ЗВІТ ===
+async function loadDailySummary(droneType) {
+  const { data, error } = await supabaseClient
+    .from("daily_report_summary")
+    .select("*")
+    .eq("drone_type", droneType)
+    .order("report_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Summary error:", error);
+    return null;
+  }
+
+  return data;
+}
+
+function renderSummary(elId, summary) {
+  if (!summary) return;
+
+  document.getElementById(elId).innerHTML = `
+  <div class="summary-text">
+    <div class="summary-title">
+      🛩 За попередній звітний період (${summary.report_date})
+    </div>
+
+    <ul class="summary-list">
+      <li>🔍 Виявлено: <strong>${summary.detected}</strong></li>
+      <li>🎯 Збито: <strong>${summary.destroyed}</strong></li>
+      <li>📡 Подавлено: <strong>${summary.suppressed}</strong></li>
+      <li>❓ Зникло: <strong>${summary.lost}</strong></li>
+      <li>💥 Удар: <strong>${summary.strike}</strong></li>
+    </ul>
+  </div>
+`;
+}
