@@ -7,8 +7,11 @@
 
   <link rel="stylesheet" href="report.css">
 
-  <!-- Supabase -->
+  <!-- Supabase SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <!-- Supabase client (ВАЖЛИВО: ДО report.js) -->
+  <script src="supabaseClient.js"></script>
 </head>
 <body>
 
@@ -41,6 +44,8 @@
 
 </div>
 
+<!-- Основна логіка -->
 <script src="report.js" defer></script>
+
 </body>
 </html>
