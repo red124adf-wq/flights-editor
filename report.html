@@ -2,6 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Звіт по БпЛА</title>
 
   <link rel="stylesheet" href="report.css">
@@ -17,18 +18,29 @@
 
 <div class="tables">
 
+  <!-- МОЛНІЯ -->
   <div class="table-box">
     <h2>БпЛА типу «МОЛНІЯ»</h2>
     <table id="table-molniya"></table>
+    <div class="daily-summary" id="summary-molniya"></div>
   </div>
 
+  <!-- ФПВ -->
   <div class="table-box">
     <h2>БпЛА типу «ФПВ»</h2>
-    <table id="table-vpv"></table>
+    <table id="table-fpv"></table>
+    <div class="daily-summary" id="summary-fpv"></div>
+  </div>
+
+  <!-- ОПТИКА -->
+  <div class="table-box">
+    <h2>БпЛА типу «ОПТИКА»</h2>
+    <table id="table-optic"></table>
+    <div class="daily-summary" id="summary-optic"></div>
   </div>
 
 </div>
 
-<script src="report.js"></script>
+<script src="report.js" defer></script>
 </body>
 </html>
