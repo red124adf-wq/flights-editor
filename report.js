@@ -1,6 +1,6 @@
-// === Supabase client ===
-
-
+/* =====================================================
+   КЛАСИФІКАЦІЯ БпЛА
+===================================================== */
 function isMolniya(crew) {
   return crew === "МОЛНІЯ";
 }
@@ -20,16 +20,20 @@ function isFPV(crew) {
   return !isMolniya(crew) && !isOptic(crew);
 }
 
-// === Константи ===
+/* =====================================================
+   КОНСТАНТИ
+===================================================== */
 const RESULT_ORDER = [
-  "Виявлено",
-  "Збито",
-  "Подавлено",
-  "Зникло",
-  "Удар"
+  { key: "detected",   label: "Виявлено",   icon: "🔍" },
+  { key: "destroyed",  label: "Збито",      icon: "🎯" },
+  { key: "suppressed", label: "Подавлено",  icon: "📡" },
+  { key: "lost",       label: "Зникло",     icon: "❓" },
+  { key: "strike",     label: "Удар",       icon: "💥" }
 ];
 
-// === Часові інтервали ===
+/* =====================================================
+   ЧАСОВІ ПЕРІОДИ
+===================================================== */
 function getPeriods() {
   const now = new Date();
 
@@ -37,47 +41,35 @@ function getPeriods() {
   const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
 
-  // 05:30 сьогодні
+  // сьогодні 05:30
   const today0530 = new Date(now);
   today0530.setHours(5, 30, 0, 0);
 
-  let reportStart;
-
-  if (now >= today0530) {
-    // після 05:30 → беремо СЬОГОДНІ
-    reportStart = new Date(today0530);
-  } else {
-    // до 05:30 → беремо ВЧОРА
-    reportStart = new Date(today0530);
-    reportStart.setDate(reportStart.getDate() - 1);
-  }
+  // звітний період (05:30)
+  const reportStart =
+    now >= today0530
+      ? new Date(today0530)
+      : new Date(today0530.setDate(today0530.getDate() - 1));
 
   return { now, startOfDay, reportStart };
 }
 
-
-// === Завантаження статистики ===
-// isMolniya = true  → crew = 'МОЛНІЯ'
-// isMolniya = false → crew != 'МОЛНІЯ'
-async function loadStatsByFilter(filterFn, from, to) {
+/* =====================================================
+   ПІДРАХУНОК З flights (ВЕРХ)
+===================================================== */
+async function loadStats(filterFn, from, to) {
   const { data, error } = await supabaseClient
     .from("flights")
     .select("date, time, action, crew")
-    .gte("date", from.toISOString().split("T")[0])
-    .lte("date", to.toISOString().split("T")[0]);
+    .gte("date", from.toISOString().slice(0, 10))
+    .lte("date", to.toISOString().slice(0, 10));
 
   if (error) {
-    console.error(error);
-    return {};
+    console.error("Flights error:", error);
+    return emptyStats();
   }
 
-  const map = {
-    "Виявлено": 0,
-    "Збито": 0,
-    "Подавлено": 0,
-    "Зникло": 0,
-    "Удар": 0
-  };
+  const stats = emptyStats();
 
   data.forEach(row => {
     if (!filterFn(row.crew)) return;
@@ -85,32 +77,46 @@ async function loadStatsByFilter(filterFn, from, to) {
     const ts = new Date(`${row.date}T${row.time}`);
     if (ts < from || ts >= to) return;
 
-    // рахуємо конкретні дії
-if (map[row.action] !== undefined) {
-  map[row.action]++;
-}
-
-// бойові дії → автоматично "Виявлено"
-if (["Збито", "Подавлено", "Удар", "Зникло"].includes(row.action)) {
-  map["Виявлено"]++;
-}
-
-// OPTIKA + "Відсутні" → теж "Виявлено"
-if (
-  row.action === "Відсутні" &&
-  isOptic(row.crew)
-) {
-  map["Виявлено"]++;
-}
-
+    switch (row.action) {
+      case "Збито":
+        stats.destroyed++;
+        stats.detected++;
+        break;
+      case "Подавлено":
+        stats.suppressed++;
+        stats.detected++;
+        break;
+      case "Зникло":
+        stats.lost++;
+        stats.detected++;
+        break;
+      case "Удар":
+        stats.strike++;
+        stats.detected++;
+        break;
+      case "Відсутні":
+        if (isOptic(row.crew)) stats.detected++;
+        break;
+    }
   });
 
-  return map;
+  return stats;
 }
 
+function emptyStats() {
+  return {
+    detected: 0,
+    destroyed: 0,
+    suppressed: 0,
+    lost: 0,
+    strike: 0
+  };
+}
 
-// === Побудова таблиці ===
-function renderTable(tableId, periodStats, dayStats) {
+/* =====================================================
+   РЕНДЕР ВЕРХНІХ ТАБЛИЦЬ
+===================================================== */
+function renderTable(tableId, period, day) {
   const table = document.getElementById(tableId);
 
   table.innerHTML = `
@@ -121,97 +127,133 @@ function renderTable(tableId, periodStats, dayStats) {
     </tr>
   `;
 
-  RESULT_ORDER.forEach(result => {
+  RESULT_ORDER.forEach(r => {
     table.innerHTML += `
       <tr>
-        <td>${result}</td>
-        <td>${periodStats[result] || 0}</td>
-        <td>${dayStats[result] || 0}</td>
+        <td>${r.label}</td>
+        <td>${period[r.key]}</td>
+        <td>${day[r.key]}</td>
       </tr>
     `;
   });
 }
 
-
-// === INIT ===
-(async function init() {
-  const { now, startOfDay, reportStart } = getPeriods();
-
-  document.getElementById("periodInfo").innerText =
-    `Звітний період: ${reportStart.toLocaleString("uk-UA")} — ${now.toLocaleString("uk-UA")}`;
-
-  const molniyaPeriod = await loadStatsByFilter(isMolniya, reportStart, now);
-  const molniyaDay    = await loadStatsByFilter(isMolniya, startOfDay, now);
-
-  const fpvPeriod = await loadStatsByFilter(isFPV, reportStart, now);
-  const fpvDay    = await loadStatsByFilter(isFPV, startOfDay, now);
-
-  const opticPeriod = await loadStatsByFilter(isOptic, reportStart, now);
-  const opticDay    = await loadStatsByFilter(isOptic, startOfDay, now);
-
-  renderTable("table-molniya", molniyaPeriod, molniyaDay);
-  renderTable("table-fpv", fpvPeriod, fpvDay);
-  renderTable("table-optic", opticPeriod, opticDay);
-  
-	const molniyaSummary = await loadDailySummary("MOLNIYA");
-	renderSummary("summary-molniya", molniyaSummary);
-
-	const fpvSummary = await loadDailySummary("FPV");
-	renderSummary("summary-fpv", fpvSummary);
-
-	const opticSummary = await loadDailySummary("OPTIC");
-	renderSummary("summary-optic", opticSummary);
-
-})();
-
-// === ВЧОРАШНІЙ ЗВІТ ===
-async function loadDailySummary(droneType) {
+/* =====================================================
+   НИЖНІ БЛОКИ (daily_report_summary)
+===================================================== */
+async function loadSummary(droneType) {
   const { data, error } = await supabaseClient
     .from("daily_report_summary")
-    .select("*")
+    .select("detected, destroyed, suppressed, lost, strike")
     .eq("drone_type", droneType)
-    .order("report_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .single(); // гарантовано 1 рядок
 
   if (error) {
-    console.error("Summary error:", error);
+    console.error("Summary load error:", error);
     return null;
   }
 
   return data;
 }
 
-function renderSummary(elId, summary) {
-  if (!summary) return;
-
-  // report_date = YYYY-MM-DD
-  const baseDate = new Date(summary.report_date + "T05:30:00");
-
-  const from = new Date(baseDate);
-  const to = new Date(baseDate);
-  to.setDate(to.getDate() + 1);
+function renderSummary(elId, s, periodLabel) {
+  if (!s) return;
 
   document.getElementById(elId).innerHTML = `
-    <div class="summary-text">
-      <div class="summary-title">
-        ← За попередній звітний період
-        (${formatDateTimeUA(from)} - ${formatDateTimeUA(to)})
-      </div>
-
-      <ul class="summary-list">
-        <li>🔍 Виявлено: <strong>${summary.detected}</strong></li>
-        <li>🎯 Збито: <strong>${summary.destroyed}</strong></li>
-        <li>📡 Подавлено: <strong>${summary.suppressed}</strong></li>
-        <li>❓ Зникло: <strong>${summary.lost}</strong></li>
-        <li>💥 Удар: <strong>${summary.strike}</strong></li>
-      </ul>
+    <div class="summary-title">
+      ← За попередній звітний період: ${periodLabel}
     </div>
+
+    <ul class="summary-list">
+      ${RESULT_ORDER.map(r =>
+        `<li>${r.icon} ${r.label}: <strong>${s[r.key]}</strong></li>`
+      ).join("")}
+    </ul>
   `;
 }
 
-function formatDateTimeUA(d) {
+
+/* =====================================================
+   INIT
+===================================================== */
+(async function init() {
+  const { now, startOfDay, reportStart } = getPeriods();
+
+  document.getElementById("periodInfo").innerText =
+    `Звітний період: ${formatDT(reportStart)} — ${formatDT(now)}`;
+
+  // верхні таблиці
+  const molP = await loadStats(isMolniya, reportStart, now);
+  const molD = await loadStats(isMolniya, startOfDay, now);
+
+  const fpvP = await loadStats(isFPV, reportStart, now);
+  const fpvD = await loadStats(isFPV, startOfDay, now);
+
+  const optP = await loadStats(isOptic, reportStart, now);
+  const optD = await loadStats(isOptic, startOfDay, now);
+
+  renderTable("table-molniya", molP, molD);
+  renderTable("table-fpv", fpvP, fpvD);
+  renderTable("table-optic", optP, optD);
+
+  // 🔹 ОДИН раз формуємо строку
+  const prevPeriodLabel = getPreviousPeriodLabel();
+
+  // нижні блоки (БЕЗ ДАТ, тільки значення)
+  renderSummary(
+    "summary-molniya",
+    await loadSummary("MOLNIYA"),
+    prevPeriodLabel
+  );
+
+  renderSummary(
+    "summary-fpv",
+    await loadSummary("FPV"),
+    prevPeriodLabel
+  );
+
+  renderSummary(
+    "summary-optic",
+    await loadSummary("OPTIC"),
+    prevPeriodLabel
+  );
+})();
+
+/* =====================================================
+   FORMAT
+===================================================== */
+function formatDT(d) {
+  return d.toLocaleString("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+/* =====================================================
+   FORMAT СТРОКИ 
+===================================================== */
+function getPreviousPeriodLabel() {
+  const now = new Date();
+
+  // знаходимо сьогоднішні 05:30
+  const today0530 = new Date(now);
+  today0530.setHours(5, 30, 0, 0);
+
+  const end =
+    now >= today0530
+      ? today0530
+      : new Date(today0530.setDate(today0530.getDate() - 1));
+
+  const start = new Date(end);
+  start.setDate(start.getDate() - 1);
+
+  return `${formatDate(start)}, 05:30 — ${formatDate(end)}, 05:30`;
+}
+
+function formatDate(d) {
   const pad = n => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ` +
-         `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
