@@ -86,6 +86,7 @@ async function loadStats(filterFn, from, to) {
         stats.suppressed++;
         stats.detected++;
         break;
+      case "Зник":
       case "Зникло":
         stats.lost++;
         stats.detected++;
