@@ -434,7 +434,7 @@ function pluralOther(n) {
   return "ФПВ";
 }
 
-async function openShiftModal() {
+window.openShiftModal = async function () {
 
   const { data, error } = await supabaseClient
     .from("flights_shift_live")
@@ -532,6 +532,6 @@ document.getElementById("shiftDayText").innerHTML =
   document.getElementById("shiftModal").classList.remove("hidden");
 }
 
-function closeShiftModal() {
+window.closeShiftModal = function () {
   document.getElementById("shiftModal").classList.add("hidden");
 }
