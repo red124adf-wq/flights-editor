@@ -460,9 +460,8 @@ let nightPeriod = "";
 
   data.forEach(row => {
 
-    const isDay =
-      row.period_label.includes("04.40") &&
-      row.period_label.includes("15.40");
+    const startTime = row.period_label.split(" - ")[0].slice(-5);
+	const isDay = startTime === "04.40";
 if (isDay) {
   dayPeriod = row.period_label;
 } else {
