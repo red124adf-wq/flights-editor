@@ -439,7 +439,24 @@ window.openShiftModal = async function () {
   const { data, error } = await supabaseClient
     .from("flights_shift_live")
     .select("*");
+/* ======================
+   DETERMINE ACTIVE SHIFT
+====================== */
 
+const now = new Date();
+const kyivNow = new Date(
+  now.toLocaleString("en-US", { timeZone: "Europe/Kyiv" })
+);
+
+const minutesNow =
+  kyivNow.getHours() * 60 + kyivNow.getMinutes();
+
+const dayStart = 4 * 60 + 40;     // 04:40
+const nightStart = 15 * 60 + 40;  // 15:40
+
+const isDayActive =
+  minutesNow >= dayStart && minutesNow < nightStart;
+  
   if (error) {
     console.error(error);
     alert("Помилка отримання даних");
@@ -457,6 +474,16 @@ let nightMolniyaLoc = "";
 let nightOtherLoc = "";
 let dayPeriod = "";
 let nightPeriod = "";
+let dayClass = "";
+let nightClass = "";
+
+if (isDayActive) {
+  dayClass = "shift-active";
+  nightClass = "shift-frozen";
+} else {
+  dayClass = "shift-frozen";
+  nightClass = "shift-active";
+}
 
   data.forEach(row => {
 
@@ -495,7 +522,7 @@ if (isDay) {
   });
 
   document.getElementById("shiftNightText").innerHTML =
-  `<div style="font-family:monospace; line-height:1.6;">
+  `<div class="${nightClass}" style="font-family:monospace; line-height:1.6; padding:12px;">
      <div style="display:flex; justify-content:space-between; font-weight:700;">
         <span>🌙 НІЧ</span>
         <span>${nightPeriod || ""}</span>
@@ -512,7 +539,7 @@ if (isDay) {
    </div>`;
 
 document.getElementById("shiftDayText").innerHTML =
-  `<div style="font-family:monospace; line-height:1.6;">
+  `<div class="${dayClass}" style="font-family:monospace; line-height:1.6; padding:12px;">
      <div style="display:flex; justify-content:space-between; font-weight:700;">
         <span>🌞 ДЕНЬ</span>
         <span>${dayPeriod || ""}</span>
