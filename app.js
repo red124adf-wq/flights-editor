@@ -418,3 +418,120 @@ function initFPV() {
   initFPVPeriodButtons();
   initFPVRange();
 }
+
+/* ==============================
+   SHIFT MODAL
+================================ */
+function pluralMolniya(n) {
+  if (n === 1) return "МОЛНІЯ";
+  if (n >= 2 && n <= 4) return "МОЛНІЇ";
+  return "МОЛНІЙ";
+}
+
+function pluralOther(n) {
+  if (n === 1) return "ФПВ";
+  if (n >= 2 && n <= 4) return "ФПВ";
+  return "ФПВ";
+}
+
+async function openShiftModal() {
+
+  const { data, error } = await supabaseClient
+    .from("flights_shift_live")
+    .select("*");
+
+  if (error) {
+    console.error(error);
+    alert("Помилка отримання даних");
+    return;
+  }
+
+  let dayMolniya = 0;
+let dayOther = 0;
+let nightMolniya = 0;
+let nightOther = 0;
+
+let dayMolniyaLoc = "";
+let dayOtherLoc = "";
+let nightMolniyaLoc = "";
+let nightOtherLoc = "";
+let dayPeriod = "";
+let nightPeriod = "";
+
+  data.forEach(row => {
+
+    const isDay =
+      row.period_label.includes("04.40") &&
+      row.period_label.includes("15.40");
+if (isDay) {
+  dayPeriod = row.period_label;
+} else {
+  nightPeriod = row.period_label;
+}
+    if (isDay) {
+
+  if (row.crew_type === "МОЛНІЯ") {
+    dayMolniya = row.total;
+    dayMolniyaLoc = row.location || "";
+  }
+
+  if (row.crew_type === "ІНШІ") {
+    dayOther = row.total;
+    dayOtherLoc = row.location || "";
+  }
+
+} else {
+
+  if (row.crew_type === "МОЛНІЯ") {
+    nightMolniya = row.total;
+    nightMolniyaLoc = row.location || "";
+  }
+
+  if (row.crew_type === "ІНШІ") {
+    nightOther = row.total;
+    nightOtherLoc = row.location || "";
+  }
+
+}
+  });
+
+  document.getElementById("shiftNightText").innerHTML =
+  `<div style="font-family:monospace; line-height:1.6;">
+     <div style="display:flex; justify-content:space-between; font-weight:700;">
+        <span>🌙 НІЧ</span>
+        <span>${nightPeriod || ""}</span>
+     </div>
+     <div style="border-top:2px solid #000; margin:6px 0 10px 0;"></div>
+
+     🛩️ МОЛНІЯ : ${nightMolniya}<br>
+     🌍 ЛОКАЦІЇ : ${nightMolniyaLoc || "—"}<br><br>
+
+     🛸 ФПВ     : ${nightOther}<br>
+     🌍 ЛОКАЦІЇ : ${nightOtherLoc || "—"}<br>
+
+     <div style="border-bottom:2px solid #000; margin:10px 0;"></div>
+   </div>`;
+
+document.getElementById("shiftDayText").innerHTML =
+  `<div style="font-family:monospace; line-height:1.6;">
+     <div style="display:flex; justify-content:space-between; font-weight:700;">
+        <span>🌞 ДЕНЬ</span>
+        <span>${dayPeriod || ""}</span>
+     </div>
+     <div style="border-top:2px solid #000; margin:6px 0 10px 0;"></div>
+
+     🛩️ МОЛНІЯ : ${dayMolniya}<br>
+     🌍 ЛОКАЦІЇ : ${dayMolniyaLoc || "—"}<br><br>
+
+     🛸 ФПВ     : ${dayOther}<br>
+     🌍 ЛОКАЦІЇ : ${dayOtherLoc || "—"}<br>
+
+     <div style="border-bottom:2px solid #000; margin:10px 0;"></div>
+   </div>`;
+
+  document.getElementById("shiftModal").classList.remove("hidden");
+}
+
+function closeShiftModal() {
+  document.getElementById("shiftModal").classList.add("hidden");
+}
