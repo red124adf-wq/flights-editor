@@ -333,3 +333,50 @@ td[contenteditable]:focus {
   display: flex;
   gap: 8px;
 }
+
+/* =========================
+   SHIFT STATUS VISUAL
+========================= */
+
+.shift-active {
+  border: 2px solid #b30000;
+  background: rgba(255, 0, 0, 0.05);
+  box-shadow: 0 0 14px rgba(255, 0, 0, 0.6);
+  position: relative;
+  transition: 0.3s ease;
+}
+
+.shift-active::before {
+  content: "● АКТИВНА ЗМІНА";
+  position: absolute;
+  top: -14px;
+  right: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff0000;
+  animation: blink 1s infinite;
+}
+
+.shift-frozen {
+  border: 2px solid #1e5eff;
+  background: rgba(30, 94, 255, 0.05);
+  box-shadow: 0 0 10px rgba(30, 94, 255, 0.4);
+  position: relative;
+  transition: 0.3s ease;
+}
+
+.shift-frozen::before {
+  content: "❄ ЗАМОРОЖЕНО";
+  position: absolute;
+  top: -14px;
+  right: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e5eff;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.25; }
+  100% { opacity: 1; }
+}
