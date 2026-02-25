@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Відеочастоти — Аналітика</title>
+    
+    <link rel="stylesheet" href="stats.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    
+    <script src="supabaseClient.js"></script>
+</head>
+<body>
+<div class="dashboard">
+    
+    <nav class="top-navbar">
+        <div class="nav-brand">🦅 <span>Моніторинг БпЛА</span></div>
+        <div class="nav-links">
+            <a href="index.html">Головна</a>
+			<a href="stats.html">Напрямки</a>
+			<a href="crews.html">Екіпажі</a>
+			<a href="video.html" class="active">Відеочастоти</a>
+			<a href="report.html">Звіт</a>
+			<a href="chart.html">Графіки</a>
+        </div>
+    </nav>
+
+    <header class="db-header">
+        <div class="db-title">
+            <h1>Статистика відеочастот</h1>
+            <p>Розподіл каналів зв'язку БпЛА (MOLNIYA / FPV)</p>
+        </div>
+        <div class="db-filters">
+            <label for="daysFilter">Період:</label>
+            <select id="daysFilter">
+                <option value="1">За добу</option>
+                <option value="7">7 днів</option>
+                <option value="30" selected>30 днів</option>
+                <option value="all">Весь період</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="db-grid">
+        <section class="chart-card">
+            <div class="card-head"><span>📡</span> МОЛНІЯ: Відео</div>
+            <div class="canvas-holder"><canvas id="molniyaVideoChart"></canvas></div>
+        </section>
+        <section class="chart-card">
+            <div class="card-head"><span>🎥</span> FPV: Відео</div>
+            <div class="canvas-holder"><canvas id="fpvVideoChart"></canvas></div>
+        </section>
+    </main>
+</div>
+
+<script src="video.js"></script>
+</body>
+</html>

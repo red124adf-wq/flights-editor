@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Графіки — Аналітика активності</title>
+    
+    <link rel="stylesheet" href="stats.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="supabaseClient.js"></script>
+</head>
+<body>
+
+<div class="dashboard">
+    <nav class="top-navbar">
+        <div class="nav-brand">🦅 <span>Моніторинг БпЛА</span></div>
+        <div class="nav-links">
+            <a href="index.html">Головна</a>
+            <a href="stats.html">Напрямки</a>
+            <a href="crews.html">Екіпажі</a>
+            <a href="video.html">Відеочастоти</a>
+            <a href="report.html">Звіт</a>
+            <a href="chart.html" class="active">Графіки</a>
+        </div>
+    </nav>
+
+    <header class="db-header">
+        <div class="db-title">
+            <h1>Аналітика активності БпЛА «МОЛНІЯ»</h1>
+            <p id="periodDisplay" style="color: var(--accent-blue); font-weight: bold;">Період: останніх 30 днів</p>
+        </div>
+
+        <div class="db-filters">
+            <label for="baseDate">Точка відліку:</label>
+            <input type="date" id="baseDate" style="background-color: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; outline: none; font-family: inherit; font-size: 0.9rem;">
+        </div>
+    </header>
+
+    <main class="db-grid">
+        <section class="chart-card">
+            <div class="card-head"><span>📈</span> ДИНАМІКА ВИЛЬОТІВ (ЗА МІСЯЦЬ)</div>
+            <div class="canvas-holder">
+                <canvas id="molniyaChart"></canvas>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="chart.js"></script>
+</body>
+</html>

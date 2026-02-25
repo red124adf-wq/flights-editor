@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіт по ворожим БпЛА — Аналітика</title>
+    
+    <link rel="stylesheet" href="stats.css">
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="supabaseClient.js"></script>
+
+    <style>
+        /* Стилі суто для таблиць звіту */
+        .report-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .report-table th { text-align: left; color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; padding: 10px 8px; border-bottom: 2px solid var(--border-color); }
+        .report-table td { padding: 12px 8px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+        .report-table td:not(:first-child) { font-weight: 700; text-align: center; font-size: 1.1rem; }
+        
+        .daily-summary { background: rgba(0,0,0,0.15); border-radius: 8px; padding: 15px; font-size: 0.9rem; color: var(--text-secondary); border: 1px solid var(--border-color); text-align: center; }
+        .daily-summary strong { color: var(--success); font-size: 1.1rem; }
+        
+        /* Кольорові акценти для цифр */
+        .val-detected { color: var(--text-primary); }
+        .val-destroyed { color: var(--success); }
+        .val-suppressed { color: var(--accent-blue); }
+        .val-lost { color: #f59e0b; } /* Помаранчевий */
+        .val-strike { color: #ef4444; } /* Червоний */
+
+        /* Стилі для блоку "Попередня зміна" */
+        .prev-section-title { margin: 30px 0 15px 0; color: var(--text-secondary); text-align: center; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .prev-card { background: rgba(30, 41, 59, 0.4); border: 1px dashed var(--border-color); padding: 20px; box-shadow: none; }
+        .prev-stats-container { display: flex; flex-direction: column; gap: 10px; font-size: 0.95rem; }
+        .prev-stat-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; }
+        .prev-stat-item:last-child { border-bottom: none; }
+        .prev-stat-item span { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <nav class="top-navbar">
+        <div class="nav-brand">🦅 <span>Моніторинг БпЛА</span></div>
+        <div class="nav-links">
+            <a href="index.html">Головна</a>
+            <a href="stats.html">Напрямки</a>
+            <a href="crews.html">Екіпажі</a>
+            <a href="video.html">Відеочастоти</a>
+            <a href="report.html" class="active">Звіт</a>
+            <a href="chart.html">Графіки</a>
+        </div>
+    </nav>
+
+    <header class="db-header">
+        <div class="db-title">
+            <h1>Звіт по ворожим БпЛА</h1>
+            <p id="periodInfo" style="color: var(--accent-blue); font-weight: bold;">Завантаження періоду...</p>
+        </div>
+    </header>
+
+    <main class="db-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <section class="chart-card">
+            <div class="card-head"><span>✈️</span> БпЛА типу «МОЛНІЯ»</div>
+            <table id="table-molniya" class="report-table"></table>
+            <div class="daily-summary" id="summary-molniya">Завантаження...</div>
+        </section>
+
+        <section class="chart-card">
+            <div class="card-head"><span>🛸</span> БпЛА типу «ФПВ»</div>
+            <table id="table-fpv" class="report-table"></table>
+            <div class="daily-summary" id="summary-fpv">Завантаження...</div>
+        </section>
+
+        <section class="chart-card">
+            <div class="card-head"><span>📷</span> БпЛА типу «ОПТИКА»</div>
+            <table id="table-optic" class="report-table"></table>
+            <div class="daily-summary" id="summary-optic">Завантаження...</div>
+        </section>
+    </main>
+
+    <h2 class="prev-section-title" id="prevPeriodInfo">Попередня зміна</h2>
+    <div class="db-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <section class="chart-card prev-card">
+            <div class="card-head" style="color: var(--text-secondary); font-size: 0.8rem;"><span>✈️</span> МОЛНІЯ (МИНУЛА)</div>
+            <div id="prev-molniya" class="prev-stats-container">Завантаження...</div>
+        </section>
+
+        <section class="chart-card prev-card">
+            <div class="card-head" style="color: var(--text-secondary); font-size: 0.8rem;"><span>🛸</span> ФПВ (МИНУЛА)</div>
+            <div id="prev-fpv" class="prev-stats-container">Завантаження...</div>
+        </section>
+
+        <section class="chart-card prev-card">
+            <div class="card-head" style="color: var(--text-secondary); font-size: 0.8rem;"><span>📷</span> ОПТИКА (МИНУЛА)</div>
+            <div id="prev-optic" class="prev-stats-container">Завантаження...</div>
+        </section>
+    </div>
+</div>
+
+<script src="report.js"></script>
+</body>
+</html>

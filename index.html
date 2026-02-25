@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система моніторингу БпЛА</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    
+    <script src="supabaseClient.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="loginBox" class="login-box">
+    <h2>Вхід у систему</h2>
+    <input id="emailInput" type="email" placeholder="Email">
+    <input id="passwordInput" type="password" placeholder="Пароль">
+    <button onclick="login()" class="primary-btn">Увійти</button>
+    <div id="status"></div>
+</div>
+
+<div id="app" class="hidden">
+    
+    <nav class="top-navbar">
+        <div class="nav-brand">🦅 <span>Моніторинг БпЛА</span></div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Головна</a>
+			<a href="stats.html">Напрямки</a>
+			<a href="crews.html">Екіпажі</a>
+			<a href="video.html">Відеочастоти</a>
+			<a href="report.html">Звіт</a>
+			<a href="chart.html">Графіки</a>
+            <button class="nav-btn" onclick="openShiftModal()">📊 Зміни</button>
+        </div>
+        <button class="logout-btn" onclick="logout()">Вихід 🚪</button>
+    </nav>
+
+    <div class="last-records-header">
+        <h3>Крайні 100 записів прольотів</h3>
+    </div>
+
+    <div class="table-scroll-container">
+        <table id="last10"></table>
+    </div>
+    <hr>
+
+    <div class="main-workspace">
+        
+        <div class="workspace-item">
+            <h3 class="block-title">Додати новий проліт</h3>
+            <p id="accessMessage" class="access-message hidden"></p>
+            <div class="card-block form-container">
+                <div id="addForm">
+                    <div class="datetime-row">
+                        <input type="date" id="f_date" title="Дата">
+                        <input type="time" id="f_time" title="Час">
+                    </div>
+                    <div class="select-row">
+                        <select id="f_from"></select>
+                        <button type="button" class="add-btn" data-table="locations" data-select="f_from">⋯</button>
+                    </div>
+                    <div class="select-row">
+                        <select id="f_to"></select>
+                        <button type="button" class="add-btn" data-table="locations" data-select="f_to">⋯</button>
+                    </div>
+                    <div class="select-row">
+                        <select id="f_crew"></select>
+                        <button type="button" class="add-btn" data-table="crews" data-select="f_crew">⋯</button>
+                    </div>
+                    <input id="f_video" placeholder="Відео (ID або Посилання)">
+                    <div class="select-row">
+                        <select id="f_action"></select>
+                        <button type="button" class="add-btn" data-table="actions" data-select="f_action">⋯</button>
+                    </div>
+                    <button class="submit-btn" onclick="addFlight()">Додати запис</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="workspace-item">
+            <h3 class="block-title">БпЛА типу МОЛНІЯ</h3>
+            <div class="card-block molniya-report" data-active-period="day">
+                <div class="period-buttons">
+                    <button data-period="all">Весь</button>
+                    <button data-period="month">Місяць</button>
+                    <button data-period="week">Тиждень</button>
+                    <button data-period="day" class="active">Доба</button>
+                </div>
+                <div class="period-label">Завантаження...</div>
+                <table class="report-table">
+                    <thead><tr><th>Результат</th><th>К-сть</th><th>%</th></tr></thead>
+                    <tbody>
+                        <tr><td>Виявлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Збито</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Подавлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Зник</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Удар</td><td>0</td><td>0%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="workspace-item">
+            <h3 class="block-title">БпЛА типу ФПВ</h3>
+            <div class="card-block fpv-report" data-active-period="day">
+                <div class="period-buttons">
+                    <button data-period="all">Весь</button>
+                    <button data-period="month">Місяць</button>
+                    <button data-period="week">Тиждень</button>
+                    <button data-period="day" class="active">Доба</button>
+                </div>
+                <div class="period-label">Завантаження...</div>
+                <table class="report-table">
+                    <thead><tr><th>Результат</th><th>К-сть</th><th>%</th></tr></thead>
+                    <tbody>
+                        <tr><td>Виявлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Збито</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Подавлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Зник</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Удар</td><td>0</td><td>0%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="workspace-item">
+            <h3 class="block-title">БпЛА типу ОПТИКА</h3>
+            <div class="card-block optics-report" data-active-period="day">
+                <div class="period-buttons">
+                    <button data-period="all">Весь</button>
+                    <button data-period="month">Місяць</button>
+                    <button data-period="week">Тиждень</button>
+                    <button data-period="day" class="active">Доба</button>
+                </div>
+                <div class="period-label">Завантаження...</div>
+                <table class="report-table">
+                    <thead><tr><th>Результат</th><th>К-сть</th><th>%</th></tr></thead>
+                    <tbody>
+                        <tr><td>Виявлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Збито</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Подавлено</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Зник</td><td>0</td><td>0%</td></tr>
+                        <tr><td>Удар</td><td>0</td><td>0%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="addDialog" class="dialog hidden">
+    <div class="dialog-box">
+        <h3 id="dialogTitle">Додати значення</h3>
+        <input id="dialogInput" placeholder="Назва...">
+        <div class="dialog-actions">
+            <button id="dialogOk" class="primary-btn">Зберегти</button>
+            <button id="dialogCancel" class="secondary-btn">Скасувати</button>
+        </div>
+    </div>
+</div>
+
+<div id="shiftModal" class="dialog hidden">
+    <div class="dialog-box wide">
+        <h3 class="shift-title-box">⚔ У взаємодії зі зведеним загоном РЕБ ⚔</h3>
+        <div class="shift-container">
+            <div id="shiftDayText"></div>
+            <div id="shiftNightText"></div>
+        </div>
+        <div class="dialog-actions centered" style="margin-top: 20px;">
+            <button class="secondary-btn" onclick="closeShiftModal()">Закрити вікно</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
