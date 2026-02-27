@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моніторинг БпЛА - Dashboard v2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+	<script src="supabaseClient.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="p-6">
+
+    <div class="flex gap-2 mb-6" id="period-filters">
+		<button data-period="day" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Звіт за добу</button>
+		<button data-period="week" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Тиждень</button>
+		<button data-period="month" class="period-btn px-4 py-1.5 bg-blue-600 text-white rounded text-[10px] uppercase font-bold shadow-lg shadow-blue-900/20">Місяць</button>
+		<button data-period="all" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Всі дані</button>
+	</div>
+
+    <div class="grid grid-cols-12 gap-6 items-stretch">
+        
+        <div class="col-span-9 flex flex-col gap-6">
+            <div class="card p-6 flex flex-col flex-1">
+                <h2 class="text-white text-xs font-bold uppercase mb-6 tracking-wider">Динаміка прольотів (МОЛНІЯ та ФПВ)</h2>
+                <div class="flex-1 relative min-h-[400px]">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <div class="flex justify-center gap-8 mt-4 text-[10px] font-bold uppercase">
+					<div id="legend-molniya" class="flex items-center gap-2 cursor-pointer select-none transition-opacity hover:opacity-80">
+						<span class="w-3 h-3 rounded-full bg-pink-500"></span> Молнія
+					</div>
+						<div id="legend-fpv" class="flex items-center gap-2 cursor-pointer select-none transition-opacity hover:opacity-80">
+					<span class="w-3 h-3 rounded-full bg-sky-400"></span> ФПВ
+					</div>
+					</div>
+			</div>
+
+            <div class="grid grid-cols-3 gap-6">
+                <div class="card overflow-hidden" id="stat-molniya">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-orange-500 text-xs">●</span>
+                        <span class="text-orange-500 font-bold text-[11px] uppercase">Молнія</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">361</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">138</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">110</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">34</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">78</span></div>
+                </div>
+
+                <div class="card overflow-hidden" id="stat-fpv">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-sky-400 text-xs">●</span>
+                        <span class="text-sky-400 font-bold text-[11px] uppercase">ФПВ</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">616</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">1</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">455</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">38</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">117</span></div>
+                </div>
+
+                <div class="card overflow-hidden" id="stat-optics">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-green-500 text-xs">●</span>
+                        <span class="text-green-500 font-bold text-[11px] uppercase">Оптика</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">23</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">2</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-3 flex flex-col gap-6">
+            <div class="card p-4">
+                <h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">📍 ТОП НАПРЯМКІВ</h3>
+                <div class="mb-2">
+                    <span class="text-pink-500 text-[9px] font-bold uppercase">Молнія</span>
+                    <div style="height: 140px;"><canvas id="molniyaDirChart"></canvas></div>
+                </div>
+                <div class="border-b border-slate-800 my-4"></div>
+                <div>
+                    <span class="text-sky-400 text-[9px] font-bold uppercase">ФПВ</span>
+                    <div style="height: 140px;"><canvas id="fpvDirChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="card p-4">
+				<h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">🏆 ТОП-10 ЕКІПАЖІВ</h3>
+				<div style="height: 300px;"> <canvas id="crewChart"></canvas>
+				</div>
+			</div>
+
+            <div class="card p-4 flex-1">
+                <h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">📶 ТОП ВІДЕОЧАСТОТ</h3>
+                <div class="mb-2">
+                    <span class="text-pink-500 text-[9px] font-bold uppercase block mb-1">Молнія</span>
+                    <div style="height: 100px;"><canvas id="molniyaFreqChart"></canvas></div>
+                </div>
+                <div class="border-b border-slate-800 my-3"></div>
+                <div>
+                    <span class="text-sky-400 text-[9px] font-bold uppercase block mb-1">FPV</span>
+                    <div style="height: 100px;"><canvas id="fpvFreqChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>

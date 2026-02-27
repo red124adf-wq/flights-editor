@@ -1,0 +1,48 @@
+body { 
+    background-color: #0b1120; 
+    color: #94a3b8; 
+    font-family: 'Inter', -apple-system, sans-serif; 
+    overflow-x: hidden;
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card { 
+    background-color: #111827; 
+    border: 1px solid #1e293b; 
+    border-radius: 0.75rem; 
+    transition: all 0.3s ease;
+}
+
+/* Ефект підсвічування при наведенні */
+.card:hover {
+    border-color: #334155;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.stat-row { 
+    border-bottom: 1px solid #1e293b; 
+    padding: 0.75rem 1rem; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 0.75rem; 
+}
+
+/* Пульсація для кнопок або активних елементів */
+.bg-blue-600 {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+}
+
+/* Додай це у свій CSS файл */
+canvas {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+}
+
+/* Окремо для маленьких графіків у сайдбарі можна підкрутити яскравість */
+#molniyaDirChart, #molniyaFreqChart { filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.3)); }
+#fpvDirChart, #fpvFreqChart { filter: drop-shadow(0 0 3px rgba(34, 211, 238, 0.3)); }
+#crewChart { filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.3)); }
