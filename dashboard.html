@@ -1,214 +1,115 @@
-/**
- * DASHBOARD.JS - GOLD EDITION
- * Виправлено: дублікати, тач-кнопки, логіка 04:40
- */
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моніторинг БпЛА - Dashboard v2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+	<script src="supabaseClient.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="p-6">
 
-// 1. КОНФІГУРАЦІЯ
-let charts = {};
-Chart.defaults.color = '#64748b';
-Chart.defaults.font.size = 10;
+    <div class="flex gap-2 mb-6" id="period-filters">
+		<button data-period="day" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Звіт за добу</button>
+		<button data-period="week" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Тиждень</button>
+		<button data-period="month" class="period-btn px-4 py-1.5 bg-blue-600 text-white rounded text-[10px] uppercase font-bold shadow-lg shadow-blue-900/20">Місяць</button>
+		<button data-period="all" class="period-btn px-4 py-1.5 bg-slate-800 rounded text-[10px] uppercase font-bold border border-slate-700 hover:bg-slate-700">Всі дані</button>
+	</div>
 
-function getReportingDate() {
-    const now = new Date();
-    if (now.getHours() < 4 || (now.getHours() === 4 && now.getMinutes() < 40)) {
-        now.setDate(now.getDate() - 1);
-    }
-    return now.toISOString().split('T')[0];
-}
-
-// 2. ОТРИМАННЯ ДАНИХ (ГРАФІК)
-async function fetchRealData(period = 'month') {
-    if (!window.supabaseClient) return null;
-    if (period === 'day') {
-        const { data, error } = await window.supabaseClient.from('daily_activity_report').select('*');
-        if (error) return null;
-        return {
-            labels: data.map(row => row.flight_time),
-            mol: data.map(row => row.molniya_count),
-            fpv: data.map(row => row.fpv_count)
-        };
-    } else {
-        let query = window.supabaseClient.from('daily_stats').select('*');
-        let startDate = new Date();
-        if (period === 'week') startDate.setDate(startDate.getDate() - 7);
-        else if (period === 'month') startDate.setDate(startDate.getDate() - 30);
+    <div class="grid grid-cols-12 gap-6 items-stretch">
         
-        if (period !== 'all') {
-            query = query.gte('flight_date', startDate.toISOString().split('T')[0]);
-        }
-        const { data, error } = await query.order('flight_date', { ascending: true });
-        if (error) return null;
-        return {
-            labels: data.map(row => {
-                const d = new Date(row.flight_date);
-                return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-            }),
-            mol: data.map(row => row.molniya_count),
-            fpv: data.map(row => row.fpv_count)
-        };
-    }
-}
+        <div class="col-span-9 flex flex-col gap-6">
+            <div class="card p-6 flex flex-col h-full">
+    <h2 id="main-chart-title" class="text-white text-xs font-bold uppercase mb-6 tracking-wider">Динаміка прольотів (МОЛНІЯ та ФПВ)</h2>
+    <div class="flex-1 relative min-h-[400px]">
+        <canvas id="mainChart"></canvas>
+    </div>
+    <div class="flex justify-center gap-4 mt-6">
+        <button id="legend-molniya" class="legend-btn active-molniya">
+            <span class="dot"></span> МОЛНІЯ
+        </button>
+        <button id="legend-fpv" class="legend-btn active-fpv">
+            <span class="dot"></span> ФПВ
+        </button>
+    </div>
+</div>
 
-// 3. ТОПИ ТА КАРТКИ (НАПРЯМКИ, ЕКІПАЖІ, ЧАСТОТИ)
-async function updateDirectionCharts(period) {
-    if (!window.supabaseClient) return;
-    let query = window.supabaseClient.from('direction_daily_stats').select('*');
-    if (period === 'day') query = query.eq('flight_date', getReportingDate());
-    else {
-        const d = new Date();
-        const days = period === 'week' ? 7 : 30;
-        d.setDate(d.getDate() - days);
-        if (period !== 'all') query = query.gte('flight_date', d.toISOString().split('T')[0]);
-    }
-    const { data, error } = await query;
-    if (error) return;
+            <div class="grid grid-cols-3 gap-6">
+                <div class="card overflow-hidden" id="stat-molniya">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-orange-500 text-xs">●</span>
+                        <span class="text-orange-500 font-bold text-[11px] uppercase">Молнія</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">361</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">138</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">110</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">34</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">78</span></div>
+                </div>
 
-    const process = (cat, color, id) => {
-        const filtered = data.filter(item => item.drone_category?.trim() === cat);
-        const totals = filtered.reduce((acc, item) => {
-            const dir = item.direction?.trim();
-            if (dir) acc[dir] = (acc[dir] || 0) + parseInt(item.daily_count);
-            return acc;
-        }, {});
-        const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-        createBarChart(id, sorted.slice(0, 5).map(i => i[0]), sorted.slice(0, 5).map(i => i[1]), color);
-    };
-    process('МОЛНІЯ', '#f43f5e', 'molniyaDirChart');
-    process('ФПВ', '#22d3ee', 'fpvDirChart');
-}
+                <div class="card overflow-hidden" id="stat-fpv">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-sky-400 text-xs">●</span>
+                        <span class="text-sky-400 font-bold text-[11px] uppercase">ФПВ</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">616</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">1</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">455</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">38</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">117</span></div>
+                </div>
 
-async function updateCrewChart(period) {
-    if (!window.supabaseClient) return;
-    let query = window.supabaseClient.from('crew_daily_stats').select('*');
-    if (period === 'day') query = query.eq('flight_date', getReportingDate());
-    const { data, error } = await query;
-    if (error) return;
-    const totals = data.reduce((acc, item) => {
-        const name = item.crew_name?.trim();
-        if (name) acc[name] = (acc[name] || 0) + parseInt(item.daily_count);
-        return acc;
-    }, {});
-    const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-    createBarChart('crewChart', sorted.slice(0, 10).map(i => i[0]), sorted.slice(0, 10).map(i => i[1]), '#22d3ee');
-}
+                <div class="card overflow-hidden" id="stat-optics">
+                    <div class="p-3 border-b border-slate-800 flex items-center gap-2">
+                        <span class="text-green-500 text-xs">●</span>
+                        <span class="text-green-500 font-bold text-[11px] uppercase">Оптика</span>
+                    </div>
+                    <div class="stat-row"><span>ВИЯВЛЕНО</span><span class="text-white font-bold">23</span></div>
+                    <div class="stat-row"><span>ЗБИТО</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>ПОДАВЛЕНО</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>ЗНИК</span><span class="text-white font-bold">0</span></div>
+                    <div class="stat-row"><span>УДАР</span><span class="text-white font-bold">2</span></div>
+                </div>
+            </div>
+        </div>
 
-async function updateFrequencyCharts(period) {
-    if (!window.supabaseClient) return;
-    let query = window.supabaseClient.from('video_frequency_stats').select('*');
-    if (period === 'day') query = query.eq('flight_date', getReportingDate());
-    const { data, error } = await query;
-    if (error) return;
-    const process = (cat, color, id) => {
-        const filtered = data.filter(item => item.drone_category?.trim() === cat);
-        const totals = filtered.reduce((acc, item) => {
-            if (item.freq_range) acc[item.freq_range] = (acc[item.freq_range] || 0) + parseInt(item.daily_count);
-            return acc;
-        }, {});
-        const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-        createBarChart(id, sorted.slice(0, 5).map(i => i[0]), sorted.slice(0, 5).map(i => i[1]), color);
-    };
-    process('MOLNIYA', '#f43f5e', 'molniyaFreqChart');
-    process('FPV', '#22d3ee', 'fpvFreqChart');
-}
+        <div class="col-span-3 flex flex-col gap-6">
+            <div class="card p-4">
+                <h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">📍 ТОП НАПРЯМКІВ</h3>
+                <div class="mb-2">
+                    <span class="text-pink-500 text-[9px] font-bold uppercase">Молнія</span>
+                    <div style="height: 140px;"><canvas id="molniyaDirChart"></canvas></div>
+                </div>
+                <div class="border-b border-slate-800 my-4"></div>
+                <div>
+                    <span class="text-sky-400 text-[9px] font-bold uppercase">ФПВ</span>
+                    <div style="height: 140px;"><canvas id="fpvDirChart"></canvas></div>
+                </div>
+            </div>
 
-async function updateStatCards(period) {
-    if (!window.supabaseClient) return;
-    const { data, error } = await window.supabaseClient.from('flight_statistics').select('*');
-    if (error || !data) return;
-    const prefix = { 'day': 'day_', 'week': 'week_', 'month': 'month_', 'all': 'total_' }[period];
-    const cardMap = { 'Молнія': '#stat-molniya', 'ФПВ': '#stat-fpv', 'Оптика': '#stat-optics' };
+            <div class="card p-4">
+				<h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">🏆 ТОП-10 ЕКІПАЖІВ</h3>
+				<div style="height: 300px;"> <canvas id="crewChart"></canvas>
+				</div>
+			</div>
 
-    data.forEach(row => {
-        const card = document.querySelector(cardMap[row.unit_type]);
-        if (!card) return;
-        const stats = [row[`${prefix}detected`], row[`${prefix}shot_down`], row[`${prefix}suppressed`], row[`${prefix}lost`], row[`${prefix}strike`]];
-        const spans = card.querySelectorAll('.stat-row span:last-child');
-        stats.forEach((val, i) => { if (spans[i]) spans[i].innerText = val ?? 0; });
-    });
-}
-
-// 4. ВІЗУАЛІЗАЦІЯ
-function initMainChart(data) {
-    if (charts.main) charts.main.destroy();
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    charts.main = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [
-                { label: 'Молнія', data: data.mol, borderColor: '#f43f5e', backgroundColor: 'transparent', fill: true, tension: 0.4, borderWidth: 2.5 },
-                { label: 'ФПВ', data: data.fpv, borderColor: '#22d3ee', backgroundColor: 'transparent', fill: true, tension: 0.4, borderWidth: 2.5 }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-}
-
-function createBarChart(id, labels, data, color) {
-    if (charts[id]) charts[id].destroy();
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-    charts[id] = new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{ data: data, backgroundColor: 'rgba(0,0,0,0)', borderColor: color, borderWidth: 2, borderRadius: 4, barThickness: 10 }]
-        },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { display: false } } } }
-    });
-}
-
-// 5. ЛОГІКА ТА СИНХРОНІЗАЦІЯ
-function syncChartVisibility() {
-    if (!charts.main) return;
-    [{ id: 'legend-molniya', index: 0 }, { id: 'legend-fpv', index: 1 }].forEach(item => {
-        const el = document.getElementById(item.id);
-        if (el) charts.main.setDatasetVisibility(item.index, !el.classList.contains('disabled'));
-    });
-    charts.main.update();
-}
-
-function setupLegendToggles() {
-    [{ id: 'legend-molniya', index: 0 }, { id: 'legend-fpv', index: 1 }].forEach(item => {
-        const el = document.getElementById(item.id);
-        if (!el) return;
-        el.onclick = () => {
-            const isVisible = charts.main.isDatasetVisible(item.index);
-            charts.main.setDatasetVisibility(item.index, !isVisible);
-            charts.main.update();
-            el.classList.toggle('disabled', isVisible);
-        };
-    });
-}
-
-async function updateDashboard(period) {
-    const titleEl = document.getElementById('main-chart-title');
-    if (titleEl) titleEl.innerText = (period === 'day') ? "Активність за день (МОЛНІЯ та ФПВ)" : "Динаміка прольотів (МОЛНІЯ та ФПВ)";
-
-    const mainData = await fetchRealData(period);
-    if (mainData) {
-        initMainChart(mainData);
-        syncChartVisibility(); 
-    }
-    
-    await updateStatCards(period);
-    await updateDirectionCharts(period);
-    await updateCrewChart(period);
-    await updateFrequencyCharts(period);
-
-    document.querySelectorAll('.period-btn').forEach(btn => {
-        const isActive = btn.getAttribute('data-period') === period;
-        btn.classList.toggle('bg-blue-600', isActive);
-        btn.classList.toggle('text-white', isActive);
-        btn.classList.toggle('bg-slate-800', !isActive);
-    });
-}
-
-// 6. ЗАПУСК
-document.addEventListener('DOMContentLoaded', () => {
-    updateDashboard('month');
-    setupLegendToggles();
-    document.getElementById('period-filters')?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('period-btn')) updateDashboard(e.target.getAttribute('data-period'));
-    });
-});
+            <div class="card p-4 flex-1">
+                <h3 class="text-white text-[11px] font-bold uppercase mb-4 border-b border-slate-800 pb-2">📶 ТОП ВІДЕОЧАСТОТ</h3>
+                <div class="mb-2">
+                    <span class="text-pink-500 text-[9px] font-bold uppercase block mb-1">Молнія</span>
+                    <div style="height: 100px;"><canvas id="molniyaFreqChart"></canvas></div>
+                </div>
+                <div class="border-b border-slate-800 my-3"></div>
+                <div>
+                    <span class="text-sky-400 text-[9px] font-bold uppercase block mb-1">FPV</span>
+                    <div style="height: 100px;"><canvas id="fpvFreqChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>
