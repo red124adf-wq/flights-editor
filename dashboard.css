@@ -1,8 +1,21 @@
+/* 1. НАЛАШТУВАННЯ ТА ЗМІННІ */
+:root {
+    --bg-main: #0b1120;
+    --bg-card: #111827;
+    --border-color: #1e293b;
+    --text-muted: #94a3b8;
+    --color-molniya: #ec4899; /* Pink-500 */
+    --color-fpv: #38bdf8;     /* Sky-400 */
+    --color-accent: #2563eb;  /* Blue-600 */
+}
+
+/* 2. БАЗОВІ СТИЛІ */
 body { 
-    background-color: #0b1120; 
-    color: #94a3b8; 
+    background-color: var(--bg-main); 
+    color: var(--text-muted); 
     font-family: 'Inter', -apple-system, sans-serif; 
     overflow-x: hidden;
+    margin: 0;
     animation: fadeIn 0.8s ease-in-out;
 }
 
@@ -11,38 +24,146 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* 3. КАРТКИ ТА КОНТЕЙНЕРИ */
 .card { 
-    background-color: #111827; 
-    border: 1px solid #1e293b; 
+    background-color: var(--bg-card); 
+    border: 1px solid var(--border-color); 
     border-radius: 0.75rem; 
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Ефект підсвічування при наведенні */
 .card:hover {
     border-color: #334155;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
 }
 
+/* 4. СТАТИСТИКА ТА РЯДКИ */
 .stat-row { 
-    border-bottom: 1px solid #1e293b; 
-    padding: 0.75rem 1rem; 
+    border-bottom: 1px solid var(--border-color); 
+    padding: 0.85rem 1.25rem; 
     display: flex; 
     justify-content: space-between; 
+    align-items: center;
     font-size: 0.75rem; 
+    font-weight: 500;
 }
 
-/* Пульсація для кнопок або активних елементів */
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row span:last-child {
+    color: white;
+    font-family: 'JetBrains Mono', monospace; /* Моноширинний шрифт для цифр */
+}
+
+/* 5. ФІЛЬТРИ ПЕРІОДІВ (КНОПКИ) */
+.period-btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
 .bg-blue-600 {
-    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+    color: white;
 }
 
-/* Додай це у свій CSS файл */
+/* 6. ТАКТИЧНА ЛЕГЕНДА (ВЕЛИКІ КНОПКИ ДЛЯ ТАЧУ) */
+.legend-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 28px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 2px solid var(--border-color);
+    border-radius: 50px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation; /* Прибирає затримку кліку на тач-скрінах */
+}
+
+.legend-btn .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #475569;
+    transition: all 0.2s ease;
+}
+
+/* Стан: МОЛНІЯ АКТИВНА */
+.legend-btn.active-molniya:not(.disabled) {
+    border-color: var(--color-molniya);
+    color: white;
+    background: rgba(236, 72, 153, 0.1);
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+}
+.legend-btn.active-molniya:not(.disabled) .dot {
+    background: var(--color-molniya);
+    box-shadow: 0 0 8px var(--color-molniya);
+}
+
+/* Стан: ФПВ АКТИВНИЙ */
+.legend-btn.active-fpv:not(.disabled) {
+    border-color: var(--color-fpv);
+    color: white;
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+.legend-btn.active-fpv:not(.disabled) .dot {
+    background: var(--color-fpv);
+    box-shadow: 0 0 8px var(--color-fpv);
+}
+
+/* Стан: ВИМКНЕНО (КЛАС DISABLED) */
+.legend-btn.disabled {
+    opacity: 0.25;
+    filter: grayscale(1);
+    text-decoration: line-through;
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.legend-btn:active {
+    transform: scale(0.94);
+}
+
+/* 7. НЕОНОВЕ СВІТІННЯ ГРАФІКІВ */
 canvas {
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.05));
 }
 
-/* Окремо для маленьких графіків у сайдбарі можна підкрутити яскравість */
-#molniyaDirChart, #molniyaFreqChart { filter: drop-shadow(0 0 3px rgba(244, 63, 94, 0.3)); }
-#fpvDirChart, #fpvFreqChart { filter: drop-shadow(0 0 3px rgba(34, 211, 238, 0.3)); }
-#crewChart { filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.3)); }
+#molniyaDirChart, #molniyaFreqChart { 
+    filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.25)); 
+}
+#fpvDirChart, #fpvFreqChart { 
+    filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.25)); 
+}
+#crewChart { 
+    filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.25)); 
+}
+
+/* 8. СКРОЛБАР (ДЛЯ ЕСТЕТИКИ В ТЕМНІЙ ТЕМІ) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
