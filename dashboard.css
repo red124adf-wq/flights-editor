@@ -4,8 +4,11 @@
     --bg-card: #111827;
     --border-color: #1e293b;
     --text-muted: #94a3b8;
-    --color-molniya: #ec4899; /* Pink-500 */
-    --color-fpv: #38bdf8;     /* Sky-400 */
+    
+    /* Оновлені кольори: Неоновий помаранчевий для Молнії */
+    --color-molniya: #ff6600; /* Neon Orange */
+    --color-fpv: #22d3ee;     /* Cyan */
+    
     --color-accent: #2563eb;  /* Blue-600 */
 }
 
@@ -56,7 +59,7 @@ body {
 
 .stat-row span:last-child {
     color: white;
-    font-family: 'JetBrains Mono', monospace; /* Моноширинний шрифт для цифр */
+    font-family: 'JetBrains Mono', monospace;
 }
 
 /* 5. ФІЛЬТРИ ПЕРІОДІВ (КНОПКИ) */
@@ -69,9 +72,13 @@ body {
     letter-spacing: 0.025em;
 }
 
-.bg-blue-600 {
+.period-btn.bg-blue-600 {
     box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
     color: white;
+}
+
+.molniya-text {
+    color: var(--color-molniya);
 }
 
 /* 6. ТАКТИЧНА ЛЕГЕНДА (ВЕЛИКІ КНОПКИ ДЛЯ ТАЧУ) */
@@ -90,7 +97,7 @@ body {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     user-select: none;
-    touch-action: manipulation; /* Прибирає затримку кліку на тач-скрінах */
+    touch-action: manipulation;
 }
 
 .legend-btn .dot {
@@ -101,24 +108,24 @@ body {
     transition: all 0.2s ease;
 }
 
-/* Стан: МОЛНІЯ АКТИВНА */
+/* Стан: МОЛНІЯ АКТИВНА (Неоновий помаранчевий) */
 .legend-btn.active-molniya:not(.disabled) {
     border-color: var(--color-molniya);
     color: white;
-    background: rgba(236, 72, 153, 0.1);
-    box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+    background: rgba(255, 170, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.2);
 }
 .legend-btn.active-molniya:not(.disabled) .dot {
     background: var(--color-molniya);
     box-shadow: 0 0 8px var(--color-molniya);
 }
 
-/* Стан: ФПВ АКТИВНИЙ */
+/* Стан: ФПВ АКТИВНИЙ (Бірюзовий) */
 .legend-btn.active-fpv:not(.disabled) {
     border-color: var(--color-fpv);
     color: white;
-    background: rgba(56, 189, 248, 0.1);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+    background: rgba(34, 211, 238, 0.1);
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
 }
 .legend-btn.active-fpv:not(.disabled) .dot {
     background: var(--color-fpv);
@@ -138,13 +145,13 @@ body {
     transform: scale(0.94);
 }
 
-/* 7. НЕОНОВЕ СВІТІННЯ ГРАФІКІВ */
+/* 7. НЕОНОВЕ СВІТІННЯ ГРАФІКІВ (drop-shadow) */
 canvas {
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.05));
 }
 
 #molniyaDirChart, #molniyaFreqChart { 
-    filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.25)); 
+    filter: drop-shadow(0 0 4px rgba(255, 170, 0, 0.25)); 
 }
 #fpvDirChart, #fpvFreqChart { 
     filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.25)); 
@@ -153,7 +160,7 @@ canvas {
     filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.25)); 
 }
 
-/* 8. СКРОЛБАР (ДЛЯ ЕСТЕТИКИ В ТЕМНІЙ ТЕМІ) */
+/* 8. СКРОЛБАР */
 ::-webkit-scrollbar {
     width: 6px;
 }
