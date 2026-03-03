@@ -3,20 +3,32 @@ const supabaseClient = window.supabaseClient;
 let charts = {};
 
 async function updateDirectionStats() {
-    // Перевірка наявності клієнта
-    if (!supabaseClient) {
-        console.error("Supabase Client не знайдено! Перевірте підключення supabaseClient.js");
-        return;
-    }
+    if (!supabaseClient) return;
 
     const period = document.getElementById("daysFilter").value;
     let query = supabaseClient.from("direction_daily_stats").select("*");
 
-    // Якщо не "all", додаємо фільтр по даті
+    // ЛОГІКА ОПЕРАТИВНОЇ ДОБИ (04:40)
+    const now = new Date();
+    const today0440 = new Date(now);
+    today0440.setHours(4, 40, 0, 0);
+
+    // Визначаємо поточну оперативну дату (якщо зараз до 04:40, то "сьогодні" — це ще вчорашнє число)
+    let currentReportDate = new Date(now);
+    if (now < today0440) {
+        currentReportDate.setDate(currentReportDate.getDate() - 1);
+    }
+    const currentReportDateStr = currentReportDate.toISOString().split('T')[0];
+
+    // Фільтрація по періоду
     if (period !== "all") {
         const days = parseInt(period, 10);
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - days);
+        let fromDate = new Date(currentReportDate);
+        
+        // Якщо вибрано "За добу" (days = 1), ми хочемо бачити дані лише за останню ПОВНУ зміну
+        // Або за поточну, залежно від вашої задачі. Зазвичай для ТОП-напрямків беруть останню зміну:
+        fromDate.setDate(fromDate.getDate() - (days - 1)); 
+        
         query = query.gte("flight_date", fromDate.toISOString().split('T')[0]);
     }
 
@@ -26,9 +38,9 @@ async function updateDirectionStats() {
         return;
     }
 
-    // Рендер графіків
-    renderDirectionChart(data, "MOLNIYA", "molniyaChart", "molniya");
-    renderDirectionChart(data, "FPV", "fpvChart", "fpv");
+    // Рендер графіків (використовуємо кириличні назви категорій, як у вашій таблиці DB)
+    renderDirectionChart(data, "МОЛНІЯ", "molniyaChart", "molniya");
+    renderDirectionChart(data, "ФПВ", "fpvChart", "fpv");
 }
 
 function renderDirectionChart(data, category, canvasId, key) {
