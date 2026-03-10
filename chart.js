@@ -1,4 +1,5 @@
 const supabaseClient = window.supabaseClient;
+const opDay = window.OPERATIONAL_DAY;
 
 let chartInstance = null;
 
@@ -121,8 +122,9 @@ async function loadData(baseDateISO) {
 const baseDateInput = document.getElementById("baseDate");
 
 // Встановлюємо правильний київський час для "сьогодні"
-const kyivDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-const todayISO = toISO(kyivDate);
+const todayISO = opDay?.getOperationalDateISO
+    ? opDay.getOperationalDateISO()
+    : toISO(new Date());
 
 baseDateInput.value = todayISO;
 baseDateInput.max = todayISO; // Забороняємо вибирати дати в майбутньому

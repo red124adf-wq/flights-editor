@@ -1,4 +1,5 @@
 const supabaseClient = window.supabaseClient;
+const opDay = window.OPERATIONAL_DAY;
 
 const RESULTS = [
     { key: "detected",   label: "Виявлено",   icon: "🔍", css: "val-detected" },
@@ -8,154 +9,113 @@ const RESULTS = [
     { key: "strike",     label: "Удар",       icon: "💥", css: "val-strike" }
 ];
 
-/* --- КЛАСИФІКАЦІЯ БпЛА --- */
-const isMolniya = (crew) => crew === "МОЛНІЯ";
-const isOptic = (crew) => {
-    if (!crew) return false;
-    const c = crew.toUpperCase();
-    return ["OPTIC", "ОПТИК", "FIBER", "FIBRE", "ОПТИКА"].some(term => c.includes(term));
-};
-const isFPV = (crew) => !isMolniya(crew) && !isOptic(crew);
-
-/* --- ЧАСОВІ МЕЖІ --- */
+/**
+ * Розрахунок періодів (поріг 04:40)
+ */
 function getPeriods() {
-    const now = new Date();
-    const startOfDay = new Date(now).setHours(0, 0, 0, 0);
-    const today0530 = new Date(now).setHours(5, 30, 0, 0);
-    
-    // Поточна зміна
-    const reportStart = now >= today0530 
-        ? today0530 
-        : new Date(now.setDate(now.getDate() - 1)).setHours(5, 30, 0, 0);
-        
-    // Попередня зміна (рівно мінус 24 години від початку поточної)
-    const prevReportStart = reportStart - (24 * 60 * 60 * 1000);
-    const prevReportEnd = reportStart;
-
-    return { now: now.getTime(), startOfDay, reportStart, prevReportStart, prevReportEnd };
-}
-
-/* --- ГОЛОВНА ЛОГІКА --- */
-async function generateReport() {
-    if (!supabaseClient) {
-        console.error("Supabase Client не знайдено!");
-        return;
+    if (opDay?.getKyivDateTimeParts && opDay?.getOperationalDateISO) {
+        const p = opDay.getKyivDateTimeParts();
+        const now = new Date(Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second || 0));
+        const [ry, rm, rd] = opDay.getOperationalDateISO().split("-").map(Number);
+        const reportStart = new Date(Date.UTC(ry, rm - 1, rd, opDay.START_HOUR, opDay.START_MINUTE, 0));
+        const prevReportStart = new Date(reportStart.getTime() - 24 * 60 * 60 * 1000);
+        const prevReportEnd = new Date(reportStart);
+        return { now, reportStart, prevReportStart, prevReportEnd };
     }
 
-    const { now, startOfDay, reportStart, prevReportStart, prevReportEnd } = getPeriods();
-    
-    const format = (ms) => new Date(ms).toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-    
-    // Заголовки
+    const now = new Date();
+    const reportStart = new Date(now);
+    reportStart.setHours(opDay?.START_HOUR ?? 4, opDay?.START_MINUTE ?? 40, 0, 0);
+    if (now < reportStart) reportStart.setDate(reportStart.getDate() - 1);
+    const prevReportStart = new Date(reportStart.getTime() - 24 * 60 * 60 * 1000);
+    const prevReportEnd = new Date(reportStart);
+    return { now, reportStart, prevReportStart, prevReportEnd };
+}
+
+/**
+ * Головна функція
+ */
+async function generateReport() {
+    if (!supabaseClient) return;
+
+    const { now, reportStart, prevReportStart, prevReportEnd } = getPeriods();
+    const format = (d) =>
+        `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")} ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+
+    // Оновлення заголовків періодів
     document.getElementById("periodInfo").innerText = `Поточна зміна: ${format(reportStart)} — ${format(now)}`;
     document.getElementById("prevPeriodInfo").innerText = `Підсумки за попередню зміну (${format(prevReportStart)} — ${format(prevReportEnd)})`;
 
-    // Беремо дані за останні 3 дні, щоб гарантовано захопити попередню зміну
-    const queryDate = new Date(prevReportStart - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    const { data, error } = await supabaseClient
-        .from('flights')
-        .select('date, time, crew, action')
-        .gte('date', queryDate);
+    // 1. ЗАПИТИ (Паралельне виконання для швидкості)
+    const [statsResponse, prevResponse] = await Promise.all([
+        supabaseClient.from('flight_statistics').select('*'),
+        supabaseClient.from('flight_summary_last_day').select('*')
+    ]);
 
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    // Обчислюємо статистику
-    const molniyaStats = processStats(data, isMolniya, reportStart, startOfDay, now, prevReportStart, prevReportEnd);
-    const fpvStats = processStats(data, isFPV, reportStart, startOfDay, now, prevReportStart, prevReportEnd);
-    const opticStats = processStats(data, isOptic, reportStart, startOfDay, now, prevReportStart, prevReportEnd);
-
-    // Малюємо Поточну зміну
-    renderTable("table-molniya", molniyaStats);
-    renderTable("table-fpv", fpvStats);
-    renderTable("table-optic", opticStats);
-
-    renderSummary("summary-molniya", molniyaStats.period);
-    renderSummary("summary-fpv", fpvStats.period);
-    renderSummary("summary-optic", opticStats.period);
-
-    // Малюємо Попередню зміну
-    renderPrevPeriod("prev-molniya", molniyaStats.prevPeriod);
-    renderPrevPeriod("prev-fpv", fpvStats.prevPeriod);
-    renderPrevPeriod("prev-optic", opticStats.prevPeriod);
-}
-
-/* --- АНАЛІЗ ДАНИХ --- */
-function processStats(data, conditionFn, reportStart, startOfDay, now, prevReportStart, prevReportEnd) {
-    let stats = {
-        period: { detected: 0, destroyed: 0, suppressed: 0, lost: 0, strike: 0 },
-        daily: { detected: 0, destroyed: 0, suppressed: 0, lost: 0, strike: 0 },
-        prevPeriod: { detected: 0, destroyed: 0, suppressed: 0, lost: 0, strike: 0 }
-    };
-
-    data.forEach(row => {
-        if (!conditionFn(row.crew)) return;
-
-        const rowTime = new Date(`${row.date}T${row.time || '00:00'}`).getTime();
-        if (rowTime > now) return;
-
-        const action = (row.action || "").toLowerCase();
-        const addStat = (target) => {
-            target.detected++;
-            if (action.includes("збито")) target.destroyed++;
-            else if (action.includes("подавл") || action.includes("реб")) target.suppressed++;
-            else if (action.includes("зник")) target.lost++;
-            else if (action.includes("удар")) target.strike++;
+    // 2. ОБРОБКА ДАНИХ ТАБЛИЦЬ (Поточна зміна)
+    const tableStats = {};
+    statsResponse.data?.forEach(row => {
+        tableStats[row.unit_type] = {
+            detected: row.day_detected,
+            destroyed: row.day_shot_down,
+            suppressed: row.day_suppressed,
+            lost: row.day_lost,
+            strike: row.day_strike
         };
-
-        // Поточна зміна і доба
-        if (rowTime >= reportStart) addStat(stats.period); 
-        if (rowTime >= startOfDay && rowTime <= now) addStat(stats.daily);   
-        
-        // Попередня зміна
-        if (rowTime >= prevReportStart && rowTime < prevReportEnd) addStat(stats.prevPeriod);
     });
 
-    return stats;
+    // 3. ОБРОБКА ДАНИХ КАРТОК (Минула зміна з View)
+    const prevStats = {};
+    prevResponse.data?.forEach(row => {
+        prevStats[row.drone_type] = row;
+    });
+
+    // 4. ВІЗУАЛІЗАЦІЯ
+    const mappings = [
+        { dbKey: 'Молнія', jsKey: 'MOLNIYA', table: 'table-molniya', summary: 'summary-molniya', prev: 'prev-molniya' },
+        { dbKey: 'ФПВ',    jsKey: 'FPV',     table: 'table-fpv',     summary: 'summary-fpv',     prev: 'prev-fpv' },
+        { dbKey: 'Оптика', jsKey: 'OPTIC',   table: 'table-optic',   summary: 'summary-optic',   prev: 'prev-optic' }
+    ];
+
+    mappings.forEach(m => {
+        // Поточна зміна
+        if (tableStats[m.dbKey]) {
+            renderTable(m.table, tableStats[m.dbKey]);
+            renderSummary(m.summary, tableStats[m.dbKey]);
+        }
+        // Минула зміна (картки)
+        if (prevStats[m.jsKey]) {
+            renderPrevPeriod(m.prev, prevStats[m.jsKey]);
+        }
+    });
 }
 
-/* --- ВІЗУАЛІЗАЦІЯ --- */
-function renderTable(elementId, stats) {
-    const tbody = document.getElementById(elementId);
-    let html = `<thead><tr><th>Результат</th><th>Зміна<br><small>(з 05:30)</small></th><th>Доба<br><small>(з 00:00)</small></th></tr></thead><tbody>`;
-    
+function renderTable(id, p) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let html = `<thead><tr><th>Результат</th><th>Зміна</th></tr></thead><tbody>`;
     RESULTS.forEach(res => {
-        html += `<tr>
-            <td>${res.icon} ${res.label}</td>
-            <td class="${res.css}">${stats.period[res.key]}</td>
-            <td class="${res.css}">${stats.daily[res.key]}</td>
-        </tr>`;
+        html += `<tr><td>${res.icon} ${res.label}</td><td class="${res.css}">${p[res.key] || 0}</td></tr>`;
     });
-    
-    tbody.innerHTML = html + `</tbody>`;
+    el.innerHTML = html + `</tbody>`;
 }
 
-function renderSummary(elementId, pStats) {
-    const el = document.getElementById(elementId);
-    const successCount = pStats.destroyed + pStats.suppressed;
-    const pct = pStats.detected > 0 ? Math.round((successCount / pStats.detected) * 100) : 0;
-    el.innerHTML = `Ефективність протидії за зміну: <strong>${pct}%</strong>`;
+function renderSummary(id, p) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const eff = p.detected > 0 ? Math.round(((Number(p.destroyed) + Number(p.suppressed)) / p.detected) * 100) : 0;
+    el.innerHTML = `Ефективність протидії: <strong>${eff}%</strong>`;
 }
 
-// Вивід даних ПОПЕРЕДНЬОЇ зміни
-function renderPrevPeriod(elementId, pStats) {
-    const el = document.getElementById(elementId);
-    if(!el) return;
-
-    let html = ``;
-    RESULTS.forEach(res => {
-        html += `
-            <div class="prev-stat-item">
-                <span>${res.icon} ${res.label}:</span> 
-                <strong class="${res.css}">${pStats[res.key]}</strong>
-            </div>
-        `;
-    });
-
-    el.innerHTML = html;
+function renderPrevPeriod(id, p) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = RESULTS.map(res => `
+        <div class="prev-stat-item">
+            <span>${res.icon} ${res.label}:</span> 
+            <strong class="${res.css}">${p[res.key] || 0}</strong>
+        </div>
+    `).join('');
 }
 
 // Запуск

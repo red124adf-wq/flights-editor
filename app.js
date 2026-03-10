@@ -3,25 +3,31 @@
 ===================================== */
 const supabaseClient = window.supabaseClient;
 const GLOBAL_START_DATE = "2025-12-05";
+const opDay = window.OPERATIONAL_DAY;
+const OPERATIONAL_DAY_SETTINGS_PASSWORD = "1306";
+let isCurrentUserAdmin = false;
 
 const formatDateUA = (s) => s ? s.split("-").reverse().join(".") : "";
 const formatTimeNoSeconds = (s) => s ? s.slice(0, 5) : "";
 
 const todayISO = () => {
-    const kyivDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-    return kyivDate.toISOString().split("T")[0];
+    if (opDay?.getOperationalDateISO) return opDay.getOperationalDateISO();
+    const fallback = new Date();
+    return fallback.toISOString().split("T")[0];
 };
 
 const daysAgoISO = (n) => {
-    const kyivDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-    kyivDate.setDate(kyivDate.getDate() - n);
-    return kyivDate.toISOString().split("T")[0];
+    if (opDay?.shiftISODate) return opDay.shiftISODate(todayISO(), -n);
+    const d = new Date(todayISO());
+    d.setDate(d.getDate() - n);
+    return d.toISOString().split("T")[0];
 };
 
 const monthsAgoISO = (n) => {
-    const kyivDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-    kyivDate.setMonth(kyivDate.getMonth() - n);
-    return kyivDate.toISOString().split("T")[0];
+    const [year, month, day] = todayISO().split("-").map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day));
+    d.setUTCMonth(d.getUTCMonth() - n);
+    return d.toISOString().slice(0, 10);
 };
 
 /* =====================================
@@ -58,6 +64,8 @@ window.login = async function () {
 // Вихід з системи
 window.logout = async function () {
     await supabaseClient.auth.signOut();
+    isCurrentUserAdmin = false;
+    document.getElementById("operationalDayBtn")?.classList.add("hidden");
     document.getElementById("app").classList.add("hidden");
     document.getElementById("loginBox").classList.remove("hidden");
     document.getElementById("status").innerText = "";
@@ -69,7 +77,8 @@ async function initApp() {
     document.getElementById("loginBox").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
 
-    await checkUserAccess(); // Перевіряємо права на форму
+    isCurrentUserAdmin = await checkUserAccess();
+    document.getElementById("operationalDayBtn")?.classList.toggle("hidden", !isCurrentUserAdmin);
     
     await Promise.all([
         loadSelect("locations", "f_from", "Звідки"),
@@ -89,8 +98,8 @@ async function checkUserAccess() {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
 
     if (authError || !user) {
-        disableFlightForm("Будь ласка, авторизуйтесь");
-        return;
+        disableFlightForm(true, "Будь ласка, авторизуйтесь");
+        return false;
     }
 
     const { data: roleData, error: roleError } = await supabaseClient
@@ -100,11 +109,15 @@ async function checkUserAccess() {
         .single();
 
     if (roleError || !roleData || roleData.role !== 'admin') {
-        disableFlightForm("Тільки адміністратори можуть додавати записи.");
+        disableFlightForm(true, "Тільки адміністратори можуть додавати записи.");
+        return false;
     }
+
+    disableFlightForm(false);
+    return true;
 }
 
-function disableFlightForm(message) {
+/* function disableFlightForm(message) {
     const container = document.getElementById('addForm');
     const msgElement = document.getElementById('accessMessage');
 
@@ -122,6 +135,31 @@ function disableFlightForm(message) {
     if (msgElement) {
         msgElement.textContent = `⚠️ ${message}`;
         msgElement.classList.remove('hidden');
+    }
+} */
+
+function disableFlightForm(isDisabled, message = '') {
+    const container = document.getElementById('addForm');
+    const msgElement = document.getElementById('accessMessage');
+
+    if (container) {
+        // Керуємо доступністю елементів
+        const elements = container.querySelectorAll('input, select, button');
+        elements.forEach(el => {
+            el.disabled = isDisabled;
+        });
+
+        // Керуємо візуальним станом через клас
+        container.classList.toggle('is-disabled', isDisabled);
+    }
+
+    if (msgElement) {
+        msgElement.textContent = isDisabled ? `⚠️ ${message}` : '';
+        msgElement.classList.toggle('hidden', !isDisabled);
+        
+        // Додаємо ARIA-атрибут для безпеки
+        if (isDisabled) msgElement.setAttribute('role', 'alert');
+        else msgElement.removeAttribute('role');
     }
 }
 
@@ -264,7 +302,7 @@ document.querySelectorAll(".add-btn").forEach(btn => {
 
 document.getElementById("dialogOk").onclick = async () => {
     const val = document.getElementById("dialogInput").value.trim();
-    if (!val) return;
+    if (!val || !curTbl || !curSelId) return;
     const { error } = await supabaseClient.from(curTbl).insert({ name: val });
     if (error) return alert(error.message);
     await loadSelect(curTbl, curSelId, "обрати");
@@ -273,6 +311,45 @@ document.getElementById("dialogOk").onclick = async () => {
 };
 
 document.getElementById("dialogCancel").onclick = () => document.getElementById("addDialog").classList.add("hidden");
+
+function refreshOperationalDaySettingsUI() {
+    const currentEl = document.getElementById("operationalDayCurrent");
+    const inputEl = document.getElementById("operationalDayTimeInput");
+    if (currentEl) currentEl.innerText = `Поточний час: ${opDay?.getStartTime ? opDay.getStartTime() : "04:40"}`;
+    if (inputEl && opDay?.getStartTime) inputEl.value = opDay.getStartTime();
+}
+
+window.openOperationalDaySettings = function () {
+    if (!isCurrentUserAdmin) return;
+    const enteredPassword = prompt("Введіть пароль доступу:");
+    if (enteredPassword === null || enteredPassword === "") return;
+    if (enteredPassword !== OPERATIONAL_DAY_SETTINGS_PASSWORD) {
+        alert("Невірний пароль.");
+        return;
+    }
+    refreshOperationalDaySettingsUI();
+    document.getElementById("operationalDayModal")?.classList.remove("hidden");
+};
+
+window.closeOperationalDaySettings = function () {
+    document.getElementById("operationalDayModal")?.classList.add("hidden");
+};
+
+window.saveOperationalDaySettings = function () {
+    const inputEl = document.getElementById("operationalDayTimeInput");
+    const value = inputEl?.value;
+    if (!value) return alert("Вкажіть час у форматі ГГ:ХХ");
+    if (!opDay?.setStartTime || !opDay.setStartTime(value)) {
+        return alert("Не вдалося зберегти час. Формат: ГГ:ХХ");
+    }
+    refreshOperationalDaySettingsUI();
+    updateAllReports();
+    closeOperationalDaySettings();
+};
+
+window.addEventListener("operational-day-config-updated", () => {
+    refreshOperationalDaySettingsUI();
+});
 
 /* =====================================
    7. ВІКНО "ЗМІНИ" (SHIFT MODAL)
@@ -290,21 +367,26 @@ function formatLocs(loc) {
 window.openShiftModal = async function () {
     const { data, error } = await supabaseClient.from("flights_shift_live").select("*");
     if (error) return alert("Помилка отримання даних: " + error.message);
+    if (!Array.isArray(data)) return;
 
-    const kyivNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Kyiv" }));
-    const minutesNow = kyivNow.getHours() * 60 + kyivNow.getMinutes();
-    const isDayActive = minutesNow >= (4 * 60 + 40) && minutesNow < (15 * 60 + 40);
+    const kyivParts = opDay?.getKyivDateTimeParts ? opDay.getKyivDateTimeParts() : null;
+    const nowHour = kyivParts ? kyivParts.hour : new Date().getHours();
+    const nowMinute = kyivParts ? kyivParts.minute : new Date().getMinutes();
+    const minutesNow = nowHour * 60 + nowMinute;
+    const dayStart = (opDay?.START_HOUR ?? 4) * 60 + (opDay?.START_MINUTE ?? 40);
+    const isDayActive = minutesNow >= dayStart && minutesNow < ((15 * 60) + 40);
 
     let dayData = { m: 0, o: 0, mLoc: "", oLoc: "", period: "" };
     let nightData = { m: 0, o: 0, mLoc: "", oLoc: "", period: "" };
 
     data.forEach(row => {
-        const isDayRow = row.period_label.split(" - ")[0].slice(-5) === "04.40";
+        const periodLabel = String(row.period_label || "");
+        const isDayRow = periodLabel.split(" - ")[0].slice(-5) === (opDay?.START_LABEL_DOT ?? "04.40");
         let target = isDayRow ? dayData : nightData;
         
-        target.period = row.period_label;
-        if (row.crew_type === "МОЛНІЯ") { target.m = row.total; target.mLoc = row.location; }
-        else if (row.crew_type === "ІНШІ") { target.o = row.total; target.oLoc = row.location; }
+        target.period = periodLabel;
+        if (row.crew_type === "МОЛНІЯ") { target.m = Number(row.total) || 0; target.mLoc = row.location || ""; }
+        else if (row.crew_type === "ІНШІ") { target.o = Number(row.total) || 0; target.oLoc = row.location || ""; }
     });
 
     const renderShift = (type, obj, isActive) => `

@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     
     <script src="supabaseClient.js"></script>
+    <script src="operationalDayConfig.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -32,10 +33,18 @@
 			<a href="crews.html">Екіпажі</a>
 			<a href="video.html">Відеочастоти</a>
 			<a href="report.html">Звіт</a>
-			<a href="chart.html">Графіки</a>
-            <button class="nav-btn" onclick="openShiftModal()">📊 Зміни</button>
+			<a href="chart.html">Графік</a>
         </div>
-        <button class="logout-btn" onclick="logout()">Вихід 🚪</button>
+            <div class="nav-actions">
+            <button class="nav-btn" onclick="openShiftModal()">&#9881; Зміни</button>
+
+                <button id="operationalDayBtn" class="nav-btn hidden" onclick="openOperationalDaySettings()">⏰ Звітна доба</button>
+
+                <a href="dashboard.html" class="nav-btn" target="_blank" rel="noopener">📊 Дашборд</a>
+
+                <button class="logout-btn" onclick="logout()">Вихід 🚪</button>
+
+            </div>
     </nav>
 
     <div class="last-records-header">
@@ -171,6 +180,18 @@
         </div>
         <div class="dialog-actions centered" style="margin-top: 20px;">
             <button class="secondary-btn" onclick="closeShiftModal()">Закрити вікно</button>
+        </div>
+    </div>
+</div>
+
+<div id="operationalDayModal" class="dialog hidden">
+    <div class="dialog-box">
+        <h3>Час початку звітної доби</h3>
+        <p id="operationalDayCurrent" style="margin: 8px 0 12px 0; color: #94a3b8; font-size: 0.9rem;">Поточний час: 04:40</p>
+        <input id="operationalDayTimeInput" type="time" step="60">
+        <div class="dialog-actions">
+            <button class="secondary-btn" onclick="closeOperationalDaySettings()">Скасувати</button>
+            <button class="primary-btn" onclick="saveOperationalDaySettings()">Зберегти</button>
         </div>
     </div>
 </div>

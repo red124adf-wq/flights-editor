@@ -1,23 +1,32 @@
 // Використовуємо глобальний клієнт Supabase
 const supabaseClient = window.supabaseClient;
+const opDay = window.OPERATIONAL_DAY;
 let charts = {};
 
 async function updateDirectionStats() {
-    // Перевірка наявності клієнта
-    if (!supabaseClient) {
-        console.error("Supabase Client не знайдено! Перевірте підключення supabaseClient.js");
-        return;
-    }
+    if (!supabaseClient) return;
 
     const period = document.getElementById("daysFilter").value;
     let query = supabaseClient.from("direction_daily_stats").select("*");
 
-    // Якщо не "all", додаємо фільтр по даті
+    // ЛОГІКА ОПЕРАТИВНОЇ ДОБИ (04:40)
+    const currentReportDateStr = opDay?.getOperationalDateISO
+        ? opDay.getOperationalDateISO()
+        : new Date().toISOString().split('T')[0];
+
+    // Визначаємо поточну оперативну дату (якщо зараз до 04:40, то "сьогодні" — це ще вчорашнє число)
+    
+
+    // Фільтрація по періоду
     if (period !== "all") {
         const days = parseInt(period, 10);
-        const fromDate = new Date();
-        fromDate.setDate(fromDate.getDate() - days);
-        query = query.gte("flight_date", fromDate.toISOString().split('T')[0]);
+        const fromDateStr = opDay?.shiftISODate
+            ? opDay.shiftISODate(currentReportDateStr, -(days - 1))
+            : currentReportDateStr;
+        
+        // Якщо вибрано "За добу" (days = 1), ми хочемо бачити дані лише за останню ПОВНУ зміну
+        // Або за поточну, залежно від вашої задачі. Зазвичай для ТОП-напрямків беруть останню зміну:
+        query = query.gte("flight_date", fromDateStr);
     }
 
     const { data, error } = await query;
@@ -26,9 +35,9 @@ async function updateDirectionStats() {
         return;
     }
 
-    // Рендер графіків
-    renderDirectionChart(data, "MOLNIYA", "molniyaChart", "molniya");
-    renderDirectionChart(data, "FPV", "fpvChart", "fpv");
+    // Рендер графіків (використовуємо кириличні назви категорій, як у вашій таблиці DB)
+    renderDirectionChart(data, "МОЛНІЯ", "molniyaChart", "molniya");
+    renderDirectionChart(data, "ФПВ", "fpvChart", "fpv");
 }
 
 function renderDirectionChart(data, category, canvasId, key) {
@@ -83,15 +92,15 @@ function renderDirectionChart(data, category, canvasId, key) {
             }]
         },
         options: {
-            indexAxis: 'y',
+            indexAxis: 'x',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { right: 80 } },
+            layout: { padding: { top: 30 } },
             plugins: {
                 legend: { display: false },
                 datalabels: {
                     anchor: 'end',
-                    align: 'right',
+                    align: 'top',
                     color: '#f8fafc',
                     font: { weight: 'bold', size: 12 },
                     formatter: (val) => `${val} (${total > 0 ? Math.round((val / total) * 100) : 0}%)`
@@ -99,13 +108,13 @@ function renderDirectionChart(data, category, canvasId, key) {
             },
             scales: {
                 x: { 
-                    beginAtZero: true, 
-                    grid: { color: '#334155', drawBorder: false }, 
-                    ticks: { color: '#94a3b8' } 
+                    grid: { display: false },
+                    ticks: { color: '#f8fafc', font: { weight: '600' } }
                 },
                 y: { 
-                    grid: { display: false }, 
-                    ticks: { color: '#f8fafc', font: { weight: '600' } } 
+                    beginAtZero: true,
+                    grid: { color: '#334155', drawBorder: false },
+                    ticks: { color: '#94a3b8' }
                 }
             }
         }

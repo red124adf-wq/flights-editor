@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Графіки — Аналітика активності</title>
+    <title>Графік — Аналітика активності</title>
     
     <link rel="stylesheet" href="stats.css">
 
@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="supabaseClient.js"></script>
+    <script src="operationalDayConfig.js"></script>
 </head>
 <body>
 
@@ -23,7 +24,7 @@
             <a href="crews.html">Екіпажі</a>
             <a href="video.html">Відеочастоти</a>
             <a href="report.html">Звіт</a>
-            <a href="chart.html" class="active">Графіки</a>
+            <a href="chart.html" class="active">Графік</a>
         </div>
     </nav>
 
@@ -40,7 +41,7 @@
     </header>
 
     <main class="db-grid">
-        <section class="chart-card">
+        <section class="chart-card wide">
             <div class="card-head"><span>📈</span> ДИНАМІКА ВИЛЬОТІВ (ЗА МІСЯЦЬ)</div>
             <div class="canvas-holder">
                 <canvas id="molniyaChart"></canvas>

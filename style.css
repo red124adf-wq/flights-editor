@@ -59,8 +59,16 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 25px 0; }
 }
 
 .nav-links {
+    margin-left: 16px;
     display: flex;
     gap: 15px;
+    align-items: center;
+}
+
+.nav-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
     align-items: center;
 }
 
@@ -278,3 +286,16 @@ input:focus, select:focus { border-color: var(--accent); }
     position: relative; padding: 15px; border-radius: 8px; margin-bottom: 15px;
 }
 @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+.is-disabled {
+    filter: grayscale(0.8);
+    opacity: 0.6;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+#accessMessage {
+    color: #ff4d4d; /* Червоний під Dark Mode */
+    font-weight: bold;
+    margin-bottom: 10px;
+}
