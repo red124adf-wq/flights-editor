@@ -1,0 +1,85 @@
+<div class="report-modal">
+  <div class="overlay" id="reportOverlay" onclick="reportOverlayClick(event)">
+    <div class="modal" id="reportModal">
+      <div class="modal-header">
+        <div class="header-left">
+          <div class="header-icon">🛡️</div>
+          <span class="modal-title">Нова доповідь</span>
+        </div>
+        <button class="close-btn" onclick="closeReportModal()">&#x2715;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="section-label">Загальна інформація</div>
+
+        <div class="field">
+          <label>Підрозділ <span class="req">*</span></label>
+          <input type="text" id="f_unit" placeholder="напр. 1БМП, 2БМП, 3БМП..." maxlength="80" oninput="clearErr('f_unit')" />
+          <span class="error-msg" id="err_unit">Вкажіть підрозділ</span>
+        </div>
+
+        <div class="field">
+          <label>Дата події <span class="req">*</span></label>
+          <input type="date" id="f_event_date" oninput="clearErr('f_event_date')" />
+          <span class="error-msg" id="err_event_date">Оберіть дату події</span>
+        </div>
+
+        <div class="field">
+          <label>Час звіту</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;gap:8px;flex:1;">
+              <button type="button" class="time-pill" id="pill_07" onclick="selectReportTime('07:00')">07:00</button>
+              <button type="button" class="time-pill" id="pill_17" onclick="selectReportTime('17:00')">17:00</button>
+            </div>
+            <span id="time_auto_label" style="font-size:11px;color:var(--text-muted);white-space:nowrap;"></span>
+          </div>
+        </div>
+
+        <div class="section-label">Опис події</div>
+
+        <div class="field">
+          <label>Опис події <span class="req">*</span></label>
+          <textarea id="f_desc" placeholder="Детальний опис ситуації..." maxlength="1000"
+            oninput="updateCount(this,'cnt_desc',1000); clearErr('f_desc')"></textarea>
+          <div style="display:flex;justify-content:space-between;">
+            <span class="error-msg" id="err_desc">Заповніть опис події</span>
+            <span class="char-count"><span id="cnt_desc">0</span> / 1000</span>
+          </div>
+        </div>
+
+        <div class="section-label">Додатково</div>
+
+        <label class="checkbox-row" onclick="toggleReportReb()">
+          <div class="cb-box" id="cb_reb"></div>
+          <span>Засоби РЕБ</span>
+        </label>
+
+        <div class="field" id="reb_field" style="display:none;">
+          <label>Засоби РЕБ на ОВТ</label>
+          <textarea id="f_reb" placeholder="Введіть дані про засоби РЕБ..." maxlength="300"
+            style="min-height:70px;" oninput="updateCount(this,'cnt_reb',300)"></textarea>
+          <span class="char-count"><span id="cnt_reb">0</span> / 300</span>
+        </div>
+
+        <div class="preview-wrap" id="previewWrap">
+          <div class="preview-header">
+            <span>Попередній перегляд</span>
+            <span class="preview-badge">WhatsApp</span>
+          </div>
+          <pre class="preview-text" id="previewText"></pre>
+          <div class="action-row" style="grid-template-columns:1fr;">
+            <button class="btn-copy" id="copyBtn" onclick="copyReportText()">📋 Копіювати</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-reset" onclick="resetReportForm()">Очистити форму</button>
+        <div class="footer-right">
+          <button class="btn-cancel" onclick="closeReportModal()">Скасувати</button>
+          <button class="btn-generate" onclick="generateReport()">Створити</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (session) {
         initApp(); // Якщо сесія є - відразу запускаємо додаток
     }
+    scheduleReportReminders();
 });
 
 // Ручний вхід
@@ -412,3 +413,69 @@ window.openShiftModal = async function () {
 };
 
 window.closeShiftModal = () => document.getElementById("shiftModal").classList.add("hidden");
+
+/* =====================================
+   8. Р—РђРћРџРћР’Р†Р”Р¬ РџРћ Р§РђРЎУ (POPUP)
+===================================== */
+let reportReminderTimers = [];
+let reportReminderIntervals = [];
+
+function getKyivNow() {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Kiev' }));
+}
+
+function getNextKyivTarget(hours, minutes) {
+    const now = getKyivNow();
+    const target = new Date(now);
+    target.setHours(hours, minutes, 0, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    return target;
+}
+
+function scheduleReportReminders() {
+    reportReminderTimers.forEach(id => clearTimeout(id));
+    reportReminderIntervals.forEach(id => clearInterval(id));
+    reportReminderTimers = [];
+    reportReminderIntervals = [];
+
+    const targets = [
+        { h: 5, m: 45 },
+        { h: 16, m: 45 }
+    ];
+
+    targets.forEach(t => {
+        const next = getNextKyivTarget(t.h, t.m);
+        const delay = Math.max(0, next - getKyivNow());
+        const timerId = setTimeout(() => {
+            showReportReminder();
+            const intervalId = setInterval(() => {
+                showReportReminder();
+            }, 24 * 60 * 60 * 1000);
+            reportReminderIntervals.push(intervalId);
+        }, delay);
+        reportReminderTimers.push(timerId);
+    });
+}
+
+function showReportReminder() {
+    const el = document.getElementById("reportReminder");
+    if (!el) return;
+    const icon = document.getElementById("reportReminderIcon");
+    const title = document.getElementById("reportReminderTitle");
+    const msg = document.getElementById("reportReminderMsg");
+    if (icon) icon.textContent = "\uD83D\uDEE1\uFE0F";
+    if (title) title.textContent = "\u041D\u0430\u0433\u0430\u0434\u0443\u0432\u0430\u043D\u043D\u044F";
+    if (msg) msg.textContent = "\u041D\u0435 \u0437\u0430\u0431\u0443\u0442\u0438 \u0437\u0440\u043E\u0431\u0438\u0442\u0438 \u0434\u043E\u043F\u043E\u0432\u0456\u0434\u044C";
+    el.classList.remove("hidden");
+}
+
+window.closeReportReminder = function () {
+    const el = document.getElementById("reportReminder");
+    if (!el) return;
+    el.classList.add("hidden");
+};
+
+window.showReportReminder = showReportReminder;
+
+
+

@@ -12,6 +12,7 @@
     <script src="operationalDayConfig.js"></script>
     
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="event.css">
 </head>
 <body>
 
@@ -37,6 +38,7 @@
         </div>
             <div class="nav-actions">
             <button class="nav-btn" onclick="openShiftModal()">&#9881; Зміни</button>
+            <button class="nav-btn" onclick="openReportModal()">🛡️ Доповідь</button>
 
                 <button id="operationalDayBtn" class="nav-btn hidden" onclick="openOperationalDaySettings()">⏰ Звітна доба</button>
 
@@ -173,7 +175,7 @@
 
 <div id="shiftModal" class="dialog hidden">
     <div class="dialog-box wide">
-        <h3 class="shift-title-box">⚔ У взаємодії зі зведеним загоном РЕБ ⚔</h3>
+        <h3 class="shift-title-box">⚔ Подавлено у взаємодії зі зведеним загоном РЕБ ⚔</h3>
         <div class="shift-container">
             <div id="shiftDayText"></div>
             <div id="shiftNightText"></div>
@@ -196,6 +198,22 @@
     </div>
 </div>
 
+<div id="reportReminder" class="report-reminder hidden" role="alertdialog" aria-live="assertive" aria-modal="false">
+    <div class="report-reminder-card">
+        <div class="report-reminder-icon" id="reportReminderIcon"></div>
+        <div class="report-reminder-text">
+            <div class="report-reminder-title" id="reportReminderTitle">REMINDER</div>
+            <div class="report-reminder-msg" id="reportReminderMsg">Do report</div>
+        </div>
+        <button class="report-reminder-close" onclick="closeReportReminder()">X</button>
+    </div>
+</div>
+
+<div id="eventModalHost"></div>
+
 <script src="app.js"></script>
+<script src="event.js"></script>
 </body>
 </html>
+
+
