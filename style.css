@@ -148,6 +148,17 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 25px 0; }
 /* =====================================
     TABLES (Головна таблиця логів)
 ===================================== */
+.last-records-section {
+    margin-bottom: 10px;
+}
+
+.last-records-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 .last-records-header h3 {
     color: var(--accent);
     text-transform: uppercase;
@@ -161,6 +172,35 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 25px 0; }
     border: 1px solid var(--border);
     border-radius: 6px;
     background: var(--card-bg);
+    transition: max-height 0.25s ease, padding 0.25s ease, border-width 0.25s ease, opacity 0.2s ease;
+}
+
+.collapse-toggle {
+    background: var(--border);
+    color: var(--text-light);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.collapse-toggle:hover {
+    background: #475569;
+    color: #fff;
+}
+
+.last-records-section.is-collapsed .table-scroll-container {
+    max-height: 0;
+    padding: 0;
+    border-width: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 
 table { width: 100%; border-collapse: collapse; }

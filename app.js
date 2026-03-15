@@ -88,8 +88,40 @@ async function initApp() {
         loadSelect("actions", "f_action", "Дія")
     ]);
 
+    initLastRecordsToggle();
     loadLast100();
     initAllReports();
+}
+
+function initLastRecordsToggle() {
+    const section = document.getElementById("lastRecordsSection");
+    const btn = document.getElementById("lastRecordsToggle");
+    if (!section || !btn) return;
+
+    const storageKey = "lastRecordsCollapsed";
+    const applyState = (collapsed) => {
+        section.classList.toggle("is-collapsed", collapsed);
+        btn.setAttribute("aria-expanded", String(!collapsed));
+        btn.innerText = collapsed ? "Розгорнути" : "Згорнути";
+    };
+
+    const saved = localStorage.getItem(storageKey);
+    if (saved !== null) applyState(saved === "1");
+
+    btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const collapsed = !section.classList.contains("is-collapsed");
+        applyState(collapsed);
+        localStorage.setItem(storageKey, collapsed ? "1" : "0");
+    });
+
+    const header = section.querySelector(".last-records-header");
+    if (header) {
+        header.addEventListener("click", (e) => {
+            if (e.target === btn) return;
+            btn.click();
+        });
+    }
 }
 
 /* =====================================
