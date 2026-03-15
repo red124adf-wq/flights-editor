@@ -425,3 +425,67 @@ input:focus, select:focus { border-color: var(--accent); }
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* =====================================
+    RESPONSIVE (MOBILE)
+===================================== */
+@media (max-width: 900px) {
+    body { padding: 14px; background-attachment: scroll; }
+
+    .top-navbar {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+
+    .nav-brand { width: 100%; }
+    .nav-links {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .nav-actions {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .last-records-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .main-workspace {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .dialog-box { min-width: 0; width: 92vw; }
+    .dialog-box.wide { width: 96vw; }
+}
+
+@media (max-width: 600px) {
+    body { padding: 10px; }
+
+    .nav-links a, .nav-btn, .logout-btn {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+
+    .nav-links a { flex: 1 1 120px; text-align: center; }
+    .nav-actions > * { flex: 1 1 140px; }
+
+    .datetime-row, .select-row { flex-direction: column; gap: 6px; }
+    .add-btn { width: 100%; }
+
+    th, td { font-size: 12px; padding: 6px 8px; }
+    .table-scroll-container { max-height: 320px; }
+
+    .login-box { width: 92vw; margin: 40px auto; padding: 20px; }
+    .dialog-box { padding: 18px; }
+
+    .report-reminder { padding: 60px 12px; }
+    .report-reminder-card { min-width: 0; grid-template-columns: 28px 1fr auto; }
+}

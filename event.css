@@ -419,3 +419,16 @@
     color: #fff;
 }
 .report-modal .cb-box::after { content: '✓'; }
+
+@media (max-width: 600px) {
+    .report-modal .overlay { padding: 0.75rem; }
+    .report-modal .modal { width: 100%; max-height: 94vh; border-radius: 10px; }
+    .report-modal .modal-header { padding: 12px 14px; }
+    .report-modal .modal-body { padding: 16px; gap: 12px; }
+    .report-modal .modal-title { font-size: 11px; letter-spacing: 1.5px; }
+    .report-modal .field input,
+    .report-modal .field select,
+    .report-modal .field textarea { font-size: 13px; padding: 8px 10px; }
+    .report-modal .preview-text { font-size: 11px; padding: 12px; }
+    .report-modal .checkbox-row { font-size: 13px; }
+}

@@ -35,6 +35,17 @@
         .prev-stat-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; }
         .prev-stat-item:last-child { border-bottom: none; }
         .prev-stat-item span { color: var(--text-secondary); }
+
+        @media (max-width: 600px) {
+            .report-table th { font-size: 0.65rem; padding: 8px 6px; }
+            .report-table td { padding: 10px 6px; font-size: 0.85rem; }
+            .report-table td:not(:first-child) { font-size: 0.95rem; }
+            .report-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+            .daily-summary { font-size: 0.8rem; padding: 12px; }
+            .prev-section-title { font-size: 0.95rem; margin: 20px 0 12px 0; }
+            .prev-card { padding: 16px; }
+        }
     </style>
 </head>
 <body>
